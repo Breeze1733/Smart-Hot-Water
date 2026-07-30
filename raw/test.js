@@ -15536,45 +15536,53 @@ define("pages/index/index.js", function(require, module, exports, window, docume
   screen, alert, confirm, prompt, XMLHttpRequest, WebSocket, Reporter, webkit, WeixinJSCore) {
         "use strict";
 
+        // 根据 MAC 码自动识别厂商类型
+        function detectFactoryName(mac) {
+            if (!mac) return "XT";
+            var str = mac.trim();
+            if (/^BD[\d]{12}$/i.test(str)) return "BD";       // 贝电 (如 BD220710001022)
+            if (/^[\d]{6}$/.test(str)) return "MH";           // 明瀚 (如 527815)
+            if (/^[\d]{14}$/.test(str)) return "XT";          // 新天 (如 00815510724116)
+            if (/^kzy/i.test(str)) return "KZY";             // 康之源
+            if ("BD" === str || "MH" === str || "XT" === str || "ZK" === str) return str;
+
+            var factoryUtil = require("101E33B294FC73BF76785BB557A6E8C0.js");
+            return factoryUtil.getFactoryName(str) || "XT";
+        }
+
         Page({
-            data: {
-                myMac: "00815510724116" // 默认 MAC
-            },
-
-            // 修改输入框数字
-            onMacInput: function(e) {
-                this.setData({ myMac: e.detail.value.trim() });
-            },
-
-            // 点开水
-            openWater: function() {
-                this.switchWater(true, this.data.myMac);
-            },
-
-            // 点关水
-            closeWater: function() {
-                this.switchWater(false, this.data.myMac);
-            },
-
             // 核心控制
             switchWater: function(isOpen, macNumber) {
-                var targetMac = macNumber || "00815510724116";
+                var targetMac = (macNumber || "").trim();
 
-                // 强行指定设备参数
+                // 动态自动判断厂商
+                var factoryName = detectFactoryName(targetMac);
+
+                // 动态填充设备与工厂参数
                 var app = getApp();
+                var factoryUtil = require("101E33B294FC73BF76785BB557A6E8C0.js");
+                app.factory = factoryUtil.getFactory(factoryName);
                 app.device = {
                     deviceId: targetMac,
                     deviceName: targetMac,
                     deviceMac: targetMac,
                     machineid: targetMac,
-                    factoryName: "XT"
+                    factoryName: factoryName
                 };
-                app.userId = app.userId || "0000000000000000";
+                app.userId = app.userId || "240901C29712078";
                 app.cardId = app.cardId || "00000000";
 
-                // 执行开关水
-                var switcher = require("3CFBD57594FC73BF5A9DBD72A447E8C0.js");
-                switcher.switching(isOpen ? "开阀" : "关阀", function() {}, "ble", false);
+                // 统一控制路由器 (自动根据 factoryName 路由到 BD / MH / XT / ZK 对应的底层子模块)
+                var switcher = require("C372FB5794FC73BFA51493505AB6E8C0.js");
+                var actionName = isOpen ? "开阀" : "关阀";
+                var callback = function(success, resultData) {
+                    if (success) {
+                        alert(actionName + " 成功 [" + factoryName + "]");
+                    } else {
+                        alert(actionName + " 失败: " + JSON.stringify(resultData));
+                    }
+                };
+                switcher.switching(actionName, callback, "ble", false);
             }
         });
     });
