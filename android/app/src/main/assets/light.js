@@ -6,8 +6,75 @@ var global = global || {};
 var __WXML_GLOBAL__ = __WXML_GLOBAL__ || {};
 var __wxAppCurrentFile__ = __wxAppCurrentFile__ || "";
 var Component = Component || function() {};
-var definePlugin = definePlugin || function() {};
-var requirePlugin = requirePlugin || function() {};
+
+var _modules = {};
+var _global = typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : {});
+
+_global.publishDomainComponents = _global.publishDomainComponents || function() {};
+_global.requirePlugin = _global.requirePlugin || function() {};
+
+var _customRequire = function(name) {
+    if (_modules[name]) {
+        var mod = _modules[name];
+        if (!mod.loaded) {
+            mod.loaded = true;
+            if (typeof mod.factory === 'function') {
+                var doc = typeof document !== 'undefined' ? document : {};
+                var loc = typeof location !== 'undefined' ? location : {};
+                var nav = typeof navigator !== 'undefined' ? navigator : {};
+                var ls = typeof localStorage !== 'undefined' ? localStorage : {};
+                var hist = typeof history !== 'undefined' ? history : {};
+                var scr = typeof screen !== 'undefined' ? screen : {};
+                mod.factory(_customRequire, mod, mod.exports, _global, doc, {}, _global, loc, nav, ls, hist, {}, scr, alert, confirm, prompt, XMLHttpRequest, WebSocket, {}, {}, {});
+            }
+        }
+        if (name === "pages/index/index.js" && _global.__indexPage) {
+            return _global.__indexPage;
+        }
+        return mod.exports;
+    }
+    if (name === "pages/index/index.js" && _global.__indexPage) {
+        return _global.__indexPage;
+    }
+    if (typeof _global[name] !== 'undefined') return _global[name];
+    return {};
+};
+
+var _customDefine = function(name, factory) {
+    _modules[name] = { factory: factory, exports: {}, loaded: false };
+};
+
+_global.define = _customDefine;
+_global.require = _customRequire;
+
+if (typeof _global.Page !== 'function') {
+    _global.Page = function(obj) {
+        _global.__indexPage = obj;
+        return obj;
+    };
+}
+_global.Page = function(obj) {
+    _global.__indexPage = obj;
+    return obj;
+};
+
+if (typeof _global.getApp !== 'function') {
+    var _appObj = { factory: null, device: null, userId: "240901C29712078", cardId: "00000000" };
+    _global.getApp = function() { return _appObj; };
+}
+
+var definePlugin = typeof definePlugin === 'function' ? definePlugin : function(url, fn) {
+    if (typeof fn === 'function') {
+        fn(_customDefine, _customRequire, {}, {}, _global, _global.wx || {}, function(){}, _global.Page, function(){}, function(){}, _global.getApp, function(){ return []; }, console, _customRequire);
+    }
+};
+
+_global.requirePlugin = function(name) {
+    return _customRequire("api/nb.js");
+};
+var requirePlugin = function(name) {
+    return _customRequire("api/nb.js");
+};
 var Behavior = Behavior || function() {};
 var __vd_version_info__ = __vd_version_info__ || {};
 var __wxAppConsole__ = console;
@@ -6444,6 +6511,9 @@ define("3CFBD57594FC73BF5A9DBD72A447E8C0.js", function(require, module, exports,
                             (c(!0, e), "nb" != a) && E().then((function() {
                                 m()
                             }))
+                        })).catch((function(err) {
+                            c(!1, err);
+                            if ("nb" != a) m();
                         }));
                     break;
             }
@@ -7083,119 +7153,108 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             return Promise.resolve(res);
         },
         setStorageSync: function(e, t) {
-            wx.setStorageSync(e, t)
+            try {
+                if (typeof wx !== 'undefined' && wx.setStorageSync) wx.setStorageSync(e, t);
+                else localStorage.setItem("wx_" + e, JSON.stringify(t));
+            } catch(err) {}
         },
         getStorageSync: function(e) {
-            return wx.getStorageSync(e)
+            try {
+                if (typeof wx !== 'undefined' && wx.getStorageSync) return wx.getStorageSync(e);
+                var v = localStorage.getItem("wx_" + e);
+                return v ? JSON.parse(v) : "";
+            } catch(err) { return ""; }
         },
         setStorage: function(e) {
-            return wx.setStorage(e)
+            e = e || {};
+            try {
+                if (typeof wx !== 'undefined' && wx.setStorage) return wx.setStorage(e);
+                localStorage.setItem("wx_" + e.key, JSON.stringify(e.data));
+            } catch(err) {}
+            e.success && e.success();
+            return Promise.resolve();
         },
         removeStorage: function(e) {
-            return wx.removeStorage(e)
+            e = e || {};
+            try {
+                if (typeof wx !== 'undefined' && wx.removeStorage) return wx.removeStorage(e);
+                localStorage.removeItem("wx_" + (typeof e === 'string' ? e : e.key));
+            } catch(err) {}
+            e.success && e.success();
+            return Promise.resolve();
         },
         removeStorageSync: function(e) {
-            wx.removeStorageSync(e)
+            try {
+                if (typeof wx !== 'undefined' && wx.removeStorageSync) wx.removeStorageSync(e);
+                else localStorage.removeItem("wx_" + e);
+            } catch(err) {}
         },
         getSystemInfoSync: function() {
-            return wx.getSystemInfoSync()
+            try {
+                if (typeof wx !== 'undefined' && wx.getSystemInfoSync) return wx.getSystemInfoSync();
+            } catch(err) {}
+            return { platform: "android", SDKVersion: "2.30.0", system: "Android 13" };
         },
         getLog: function() {
-            return wx.getRealtimeLogManager ? wx.getRealtimeLogManager() : null
+            return null;
         },
         isDebug: function() {
-            return !!wx.getAppBaseInfo && wx.getAppBaseInfo().enableDebug || "release" != wx.getAccountInfoSync().miniProgram.envVersion
+            return true;
         },
-        navigateBack: function(e) {
-            return wx.navigateBack(e)
-        },
-        switchTab: function(e) {
-            return wx.switchTab(e)
-        },
+        navigateBack: function(e) {},
+        switchTab: function(e) {},
         getLocation: function(e) {
-            return wx.getLocation(e)
+            e = e || {};
+            e.fail && e.fail({ errMsg: "getLocation:fail" });
         },
-        openSetting: function(e) {
-            return wx.openSetting(e)
-        },
-        getSetting: function(e) {
-            return wx.getSetting(e)
-        },
-        authorize: function(e) {
-            return wx.authorize(e)
-        },
+        openSetting: function(e) {},
+        getSetting: function(e) {},
+        authorize: function(e) {},
         showLoading: function(e) {
-            return wx.showLoading(e)
+            var title = typeof e === "string" ? e : (e ? e.title : "");
+            if (typeof window !== "undefined" && window.logToConsole) {
+                window.logToConsole("[UI] " + (title || "加载中..."), "info");
+            }
         },
-        hideLoading: function(e) {
-            return wx.hideLoading(e)
-        },
+        hideLoading: function(e) {},
         showToast: function(e) {
-            return wx.showToast(e)
+            var title = typeof e === "string" ? e : (e ? e.title : "");
+            if (typeof window !== "undefined" && window.logToConsole) {
+                window.logToConsole("[UI Toast] " + (title || ""), "info");
+            }
         },
         showModal: function(e) {
-            return wx.showModal(e)
+            e = e || {};
+            if (typeof window !== "undefined" && window.logToConsole) {
+                window.logToConsole("[UI Modal] " + (e.title || "") + ": " + (e.content || ""), "warn");
+            }
+            if (e.success) e.success({ confirm: true, cancel: false });
         },
         request: function(e) {
-            return wx.request(e)
+            e = e || {};
+            e.fail && e.fail({ errMsg: "request:fail" });
+            return Promise.reject({ errMsg: "request:fail" });
         },
         getUpdateManager: function() {
-            return wx.getUpdateManager()
+            return {};
         },
         buf2hex: function(e) {
+            if (!e) return "";
             return Array.prototype.map.call(new Uint8Array(e), (function(e) {
                 return ("00" + e.toString(16)).slice(-2)
             })).join("")
         },
         isSystemLBSDenied: function() {
-            if ("authorized" != wx.getAppAuthorizeSetting().locationAuthorized) {
-                return wx.hideLoading(), wx.showModal({
-                    title: "未开启位置权限",
-                    content: "蓝牙需要微信位置权限，请在权限管理允许“位置”或“定位”权限。",
-                    showCancel: !1,
-                    confirmText: "去开启",
-                    complete: function(e) {
-                        wx.openAppAuthorizeSetting()
-                    }
-                }), !0
-            }
-            if (!wx.getSystemSetting().locationEnabled) {
-                return wx.hideLoading(), wx.showModal({
-                    title: "未开启系统定位",
-                    content: "蓝牙需要开启系统定位，请在手机控制面板打开“位置信息”或“定位服务”开关。",
-                    showCancel: !1,
-                    confirmText: "知道了"
-                }), !0
-            }
-            return !1
+            return false;
         },
         isSystemBLEDenied: function() {
-            if ("ios" == wx.getSystemInfoSync().platform.toLowerCase() && "denied" == wx.getAppAuthorizeSetting().bluetoothAuthorized) {
-                return wx.hideLoading(), wx.showModal({
-                    title: "未开启蓝牙权限",
-                    content: "需要微信蓝牙权限，请在微信设置中允许“蓝牙”权限",
-                    showCancel: !1,
-                    confirmText: "去开启",
-                    complete: function(e) {
-                        wx.openAppAuthorizeSetting()
-                    }
-                }), !0
-            }
-            if (!wx.getSystemSetting().bluetoothEnabled) {
-                return wx.hideLoading(), wx.showModal({
-                    title: "未开启系统蓝牙",
-                    content: "系统蓝牙已关闭，请在手机控制面板打开“蓝牙”开关。",
-                    showCancel: !1,
-                    confirmText: "知道了"
-                }), !0
-            }
-            return !1
+            return false;
         },
         isAuthDenied: function(e) {
-            return e.indexOf("auth deny") >= 0 || e.indexOf("auth denied") >= 0
+            return false;
         },
         isAuthDeniedKeepAsk: function(e) {
-            return !1
+            return false;
         }
     };
 });
@@ -7353,36 +7412,29 @@ define("C9B02F2594FC73BFAFD64722A696E8C0.js", function(require, module, exports,
 
 define("CE76404694FC73BFA81028419976E8C0.js", function(require, module, exports, window, document, frames, self, location, navigator, localStorage, history, Caches, screen, alert, confirm, prompt, XMLHttpRequest, WebSocket, Reporter, webkit, WeixinJSCore) {
     "use strict";
-    var n = require("C2427CC194FC73BFA42414C6A277E8C0.js"),
-        e = n.getLog(),
-        l = getApp(),
-        o = n.isDebug(),
-        r = null;
     module.exports = {
         info: function() {
-            e && e.info.apply(e, arguments)
+            try { console.info.apply(console, arguments); } catch(e) {}
         },
         warn: function() {
-            e && e.warn.apply(e, arguments)
+            try { console.warn.apply(console, arguments); } catch(e) {}
         },
         error: function(n, r, t) {
-            l || (l = getApp());
-            var i = null != r.errormsg || null != r.Msg;
-            o && (i ? console.warn(n, null != r ? r : "", null != t ? t : "") : console.error(n, null != r ? r : "", null != t ? t : "")), e && (e.addFilterMsg(l.phone), l.device.deviceName && (e.addFilterMsg(l.device.deviceName), e.addFilterMsg(l.device.factoryName)), e.addFilterMsg(n), i ? e.warn(n, null != r ? r : "", null != t ? t : "") : e.error(n, null != r ? r : "", null != t ? t : ""))
+            try { console.error(n, null != r ? r : "", null != t ? t : ""); } catch(e) {}
         },
-        setFilterMsg: function(n) {
-            e && e.setFilterMsg && "string" == typeof n && e.setFilterMsg(n)
-        },
-        addFilterMsg: function(n) {
-            e && e.addFilterMsg && "string" == typeof n && e.addFilterMsg(n)
-        },
+        setFilterMsg: function(n) {},
+        addFilterMsg: function(n) {},
         log: function(n, l, r) {
-            o && ("发送数据" == n || "接收数据" == n ? console.info(n, null != l ? l : "", null != r ? r : "") : console.log(n, null != l ? l : "", null != r ? r : "")), e && e.info(n, null != l ? l : "", null != r ? r : "")
+            try {
+                if ("发送数据" == n || "接收数据" == n) {
+                    console.info(n, null != l ? l : "", null != r ? r : "");
+                } else {
+                    console.log(n, null != l ? l : "", null != r ? r : "");
+                }
+            } catch(e) {}
         },
         isAndroid: function() {
-            if (null != r) return r;
-            var e = n.getSystemInfoSync().platform.toLowerCase();
-            return r = "android" == e || "devtools" == e
+            return true;
         },
         delay: function(n) {
             return new Promise((function(e) {
@@ -7391,7 +7443,7 @@ define("CE76404694FC73BFA81028419976E8C0.js", function(require, module, exports,
                 }), 1e3 * n)
             }))
         },
-        isLog: o
+        isLog: true
     };
 });
 
@@ -7571,10 +7623,18 @@ define("pages/index/index.js", function(require, module, exports, window, docume
                 var switcher = require("3CFBD57594FC73BF5A9DBD72A447E8C0.js");
                 var actionName = isOpen ? "开阀" : "关阀";
                 var callback = function(success, resultData) {
+                    var detailStr = typeof resultData === "object" ? JSON.stringify(resultData) : String(resultData);
+                    if (typeof window !== "undefined" && window.logToConsole) {
+                        if (success) {
+                            window.logToConsole("[Callback SUCCESS] " + actionName + " 链路终点执行成功！响应数据: " + detailStr, "success");
+                        } else {
+                            window.logToConsole("[Callback ERROR] " + actionName + " 链路节点抛出错误！错误代码/信息: " + detailStr, "error");
+                        }
+                    }
                     if (success) {
                         alert(actionName + " 成功");
                     } else {
-                        alert(actionName + " 失败: " + JSON.stringify(resultData));
+                        alert(actionName + " 失败: " + detailStr);
                     }
                 };
                 switcher.switching(actionName, callback, "ble", false);

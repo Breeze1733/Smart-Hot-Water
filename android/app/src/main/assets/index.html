@@ -24,24 +24,24 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 16px;
         }
 
         .card {
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
             background: var(--card-bg);
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-color);
             border-radius: 24px;
-            padding: 28px 24px;
+            padding: 24px 20px;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
             text-align: center;
         }
 
         h2 { font-size: 22px; margin-bottom: 20px; color: #38bdf8; }
 
-        .input-group { margin-bottom: 24px; text-align: left; }
+        .input-group { margin-bottom: 20px; text-align: left; }
         .input-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
         .input-group input {
             width: 100%;
@@ -72,7 +72,7 @@
         }
         .btn-confirm:active { transform: scale(0.95); }
 
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 
         .btn {
             border: none;
@@ -87,6 +87,78 @@
         .btn:active { transform: scale(0.95); }
         .btn-open { background: linear-gradient(135deg, #0284c7, #2563eb); }
         .btn-close { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        /* 黑框控制台样式 */
+        .console-box {
+            width: 100%;
+            background: #090d16;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .console-header {
+            background: #1e293b;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #94a3b8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .console-title {
+            font-weight: bold;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .console-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-mini {
+            background: rgba(255, 255, 255, 0.12);
+            border: none;
+            color: #cbd5e1;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .btn-mini:active { background: rgba(255, 255, 255, 0.25); }
+
+        .console-body {
+            height: 240px;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: "Consolas", "Fira Code", Monaco, monospace;
+            font-size: 11px;
+            line-height: 1.45;
+            word-break: break-all;
+            white-space: pre-wrap;
+            color: #e2e8f0;
+        }
+
+        .log-item {
+            margin-bottom: 4px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+            padding-bottom: 2px;
+        }
+        .log-time { color: #64748b; margin-right: 6px; font-weight: normal; }
+        .log-info { color: #94a3b8; }
+        .log-success { color: #4ade80; font-weight: bold; }
+        .log-warn { color: #facc15; }
+        .log-error { color: #f87171; font-weight: bold; }
+        .log-ble { color: #c084fc; }
     </style>
 </head>
 <body>
@@ -106,7 +178,212 @@
             <button class="btn btn-open" onclick="openWater()">开水</button>
             <button class="btn btn-close" onclick="closeWater()">关水</button>
         </div>
+
+        <!-- 调试终端黑框框 -->
+        <div class="console-box">
+            <div class="console-header">
+                <span class="console-title">⚡ 链路执行与诊断控制台</span>
+                <div class="console-actions">
+                    <button class="btn-mini" onclick="clearLogs()">清空</button>
+                    <button class="btn-mini" onclick="copyLogs()">复制日志</button>
+                </div>
+            </div>
+            <div class="console-body" id="logContainer"></div>
+        </div>
     </div>
+
+    <!-- 终端日志与 AppNativeBle 桥接初始化脚本 -->
+    <script>
+        (function() {
+            function getNowTime() {
+                var d = new Date();
+                var h = String(d.getHours()).padStart(2, '0');
+                var m = String(d.getMinutes()).padStart(2, '0');
+                var s = String(d.getSeconds()).padStart(2, '0');
+                var ms = String(d.getMilliseconds()).padStart(3, '0');
+                return h + ":" + m + ":" + s + "." + ms;
+            }
+
+            function formatArg(arg) {
+                if (arg === null) return "null";
+                if (arg === undefined) return "undefined";
+                if (typeof arg === "object") {
+                    try { return JSON.stringify(arg); } catch(e) { return String(arg); }
+                }
+                return String(arg);
+            }
+
+            window.logToConsole = function(msg, type) {
+                try {
+                    type = type || 'info';
+                    var logContainer = document.getElementById("logContainer");
+                    if (!logContainer) return;
+
+                    var div = document.createElement("div");
+                    div.className = "log-item log-" + type;
+
+                    var timeSpan = document.createElement("span");
+                    timeSpan.className = "log-time";
+                    timeSpan.innerText = "[" + getNowTime() + "]";
+
+                    var contentSpan = document.createElement("span");
+                    contentSpan.innerText = typeof msg === "string" ? msg : formatArg(msg);
+
+                    div.appendChild(timeSpan);
+                    div.appendChild(contentSpan);
+                    logContainer.appendChild(div);
+
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                } catch(e) {}
+            };
+
+            // 拦截全局 console
+            var origLog = console.log;
+            var origInfo = console.info;
+            var origWarn = console.warn;
+            var origError = console.error;
+
+            console.log = function() {
+                try {
+                    var args = Array.prototype.slice.call(arguments);
+                    var msg = args.map(formatArg).join(" ");
+                    window.logToConsole(msg, 'info');
+                } catch(e) {}
+                if (origLog) origLog.apply(console, arguments);
+            };
+
+            console.info = function() {
+                try {
+                    var args = Array.prototype.slice.call(arguments);
+                    var msg = args.map(formatArg).join(" ");
+                    window.logToConsole(msg, msg.indexOf("数据") >= 0 || msg.indexOf("BLE") >= 0 ? 'ble' : 'info');
+                } catch(e) {}
+                if (origInfo) origInfo.apply(console, arguments);
+            };
+
+            console.warn = function() {
+                try {
+                    var args = Array.prototype.slice.call(arguments);
+                    var msg = args.map(formatArg).join(" ");
+                    window.logToConsole(msg, 'warn');
+                } catch(e) {}
+                if (origWarn) origWarn.apply(console, arguments);
+            };
+
+            console.error = function() {
+                try {
+                    var args = Array.prototype.slice.call(arguments);
+                    var msg = args.map(formatArg).join(" ");
+                    window.logToConsole(msg, 'error');
+                } catch(e) {}
+                if (origError) origError.apply(console, arguments);
+            };
+
+            // 捕获未处理的异常
+            window.onerror = function(msg, url, line, col, error) {
+                window.logToConsole("[JS Uncaught Error] " + msg + " Line: " + line + ":" + col, 'error');
+                return false;
+            };
+
+            window.onunhandledrejection = function(event) {
+                window.logToConsole("[Promise Unhandled Reject] " + formatArg(event ? event.reason : "unknown"), 'error');
+            };
+        })();
+
+        // Native BLE 桥接安全包装层
+        (function() {
+            var originalNative = window.AppNativeBle || {};
+            var getRaw = function() {
+                return originalNative;
+            };
+            var _bleDataCb = null;
+
+            var AppNativeBleWrapper = {
+                init: function() {
+                    try { var raw = getRaw(); if (raw.init) raw.init(); } catch(e) {}
+                },
+                saveMac: function(mac) {
+                    try { var raw = getRaw(); if (raw.saveMac) raw.saveMac(mac); } catch(e) {}
+                },
+                loadMac: function() {
+                    try { var raw = getRaw(); return raw.loadMac ? raw.loadMac() : ""; } catch(e) { return ""; }
+                },
+                connect: function(params) {
+                    try {
+                        var raw = getRaw();
+                        var paramStr = typeof params === "string" ? params : JSON.stringify(params);
+                        window.logToConsole("[BLE Native] 调用 connect(" + paramStr + ")", "ble");
+                        if (raw.connect) raw.connect(paramStr);
+                    } catch(e) {
+                        window.logToConsole("[BLE Native Connect Error] " + e.message, "error");
+                    }
+                },
+                write: function(params) {
+                    try {
+                        var raw = getRaw();
+                        var paramStr = typeof params === "string" ? params : JSON.stringify(params);
+                        window.logToConsole("[BLE Native] 调用 write(" + paramStr + ")", "ble");
+                        if (raw.write) raw.write(paramStr);
+                    } catch(e) {
+                        window.logToConsole("[BLE Native Write Error] " + e.message, "error");
+                    }
+                },
+                disconnect: function(id) {
+                    try {
+                        var raw = getRaw();
+                        window.logToConsole("[BLE Native] 调用 disconnect(" + (id || "") + ")", "warn");
+                        if (raw.disconnect) raw.disconnect(id || "");
+                    } catch(e) {
+                        window.logToConsole("[BLE Native Disconnect Error] " + e.message, "error");
+                    }
+                },
+                onDataReceived: function(cb) {
+                    _bleDataCb = cb;
+                    window.logToConsole("[BLE Native] 已注册蓝牙 Notify 数据监听回调", "info");
+                },
+                notifyData: function(hexStr) {
+                    try {
+                        window.logToConsole("[BLE Native Notify] 收到水表回复 Notify Hex: " + hexStr, "success");
+                        if (_bleDataCb) {
+                            var bytes = [];
+                            for (var i = 0; i < hexStr.length; i += 2) {
+                                bytes.push(parseInt(hexStr.substr(i, 2), 16));
+                            }
+                            var buffer = new Uint8Array(bytes).buffer;
+                            _bleDataCb(buffer);
+                        } else {
+                            window.logToConsole("[BLE Native Notify Warning] 收到 Notify 数据但 JS 未设置 _bleDataCb!", "warn");
+                        }
+                    } catch(e) {
+                        window.logToConsole("[BLE Notify Callback Error] " + e.message, "error");
+                    }
+                }
+            };
+
+            window.AppNativeBle = AppNativeBleWrapper;
+            window.logToConsole("[System] 链路诊断控制台准备就绪", "success");
+        })();
+
+        function clearLogs() {
+            var container = document.getElementById("logContainer");
+            if (container) container.innerHTML = "";
+        }
+
+        function copyLogs() {
+            var container = document.getElementById("logContainer");
+            if (!container) return;
+            var text = container.innerText;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    alert("日志已复制到剪贴板");
+                }).catch(function() {
+                    prompt("请手动复制日志：", text);
+                });
+            } else {
+                prompt("请手动复制日志：", text);
+            }
+        }
+    </script>
 
     <!-- 引入极简逻辑驱动包 -->
     <script src="light.js"></script>
@@ -114,12 +391,27 @@
         // 获取前端页面逻辑控制对象
         var page;
         try {
-            page = require("pages/index/index.js");
+            if (typeof require === "function") {
+                page = require("pages/index/index.js");
+            }
+            if (!page || !page.switchWater) {
+                page = window.__indexPage || {};
+            }
+            if (page && page.switchWater) {
+                window.logToConsole("[Init] 已载入 pages/index/index.js 控制逻辑", "info");
+            } else {
+                window.logToConsole("[Init Error] 载入 pages/index/index.js 失败: switchWater 未定义", "error");
+            }
         } catch (e) {
-            page = {};
+            page = window.__indexPage || {};
+            if (page && page.switchWater) {
+                window.logToConsole("[Init] 已从 window.__indexPage 成功恢复页面控制逻辑", "info");
+            } else {
+                window.logToConsole("[Init Error] 载入 pages/index/index.js 失败: " + e.message, "error");
+            }
         }
 
-        // 页面加载时恢复 MAC（原生优先，localStorage 兜底）
+        // 页面加载时恢复 MAC
         (function() {
             var mac = "";
             try { mac = AppNativeBle.loadMac(); } catch (e) {}
@@ -128,27 +420,53 @@
             }
             if (mac) {
                 document.getElementById("macInput").value = mac;
+                window.logToConsole("[Mac] 自动加载已保存的 MAC: " + mac, "info");
             }
         })();
 
-        // 确定保存：双写 SharedPreferences + localStorage
         function confirmMac() {
             var mac = document.getElementById("macInput").value.trim();
-            if (!mac) { alert("请输入 MAC 地址"); return; }
+            if (!mac) {
+                window.logToConsole("[Mac Error] 请输入有效的 MAC 地址", "error");
+                alert("请输入 MAC 地址");
+                return;
+            }
             try { AppNativeBle.saveMac(mac); } catch (e) {}
             try { localStorage.setItem("myMac", mac); } catch (e) {}
+            window.logToConsole("[Mac Saved] MAC 地址已保存: " + mac, "success");
             alert("已保存");
         }
 
-        // 实时从输入框读取 MAC 并开关水
         function openWater() {
             var mac = document.getElementById("macInput").value.trim();
-            page.switchWater(true, mac);
+            if (!mac) {
+                window.logToConsole("[链路中断] MAC地址为空，无法开水！", "error");
+                alert("请输入 MAC 地址");
+                return;
+            }
+            window.logToConsole("==========================================", "info");
+            window.logToConsole("[链路启动] 正在发起【开水】动作 | 目标 MAC: " + mac, "info");
+            if (page && page.switchWater) {
+                page.switchWater(true, mac);
+            } else {
+                window.logToConsole("[链路中断] page.switchWater 函数丢失或未初始化！", "error");
+            }
         }
 
         function closeWater() {
             var mac = document.getElementById("macInput").value.trim();
-            page.switchWater(false, mac);
+            if (!mac) {
+                window.logToConsole("[链路中断] MAC地址为空，无法关水！", "error");
+                alert("请输入 MAC 地址");
+                return;
+            }
+            window.logToConsole("==========================================", "info");
+            window.logToConsole("[链路启动] 正在发起【关水】动作 | 目标 MAC: " + mac, "info");
+            if (page && page.switchWater) {
+                page.switchWater(false, mac);
+            } else {
+                window.logToConsole("[链路中断] page.switchWater 函数丢失或未初始化！", "error");
+            }
         }
     </script>
 </body>
