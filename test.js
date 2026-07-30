@@ -15504,13 +15504,16 @@ define("waterManager.js", function(require, module, exports, window, document, f
     function switchWater(isOpen, macNumber) {
         // 默认值 00815510724116
         var targetMac = macNumber || "00815510724116";
-        getApp().device = {
-            deviceId: targetMac,
-            deviceName: targetMac,
-            deviceMac: targetMac,
-            machineid: targetMac,
-            factoryName: "XT" // 厂商固定不变
-        };
+                var app = getApp();
+                app.device = {
+                    deviceId: targetMac,
+                    deviceName: targetMac,
+                    deviceMac: targetMac,
+                    machineid: targetMac,
+                    factoryName: "XT"
+                };
+                app.userId = app.userId || "0000000000000000";
+                app.cardId = app.cardId || "00000000";
 
         var actionName = isOpen ? "开阀" : "关阀";
         var callback = function(success, resultData) {
@@ -15558,13 +15561,16 @@ define("pages/index/index.js", function(require, module, exports, window, docume
                 var targetMac = macNumber || "00815510724116";
 
                 // 强行指定设备参数
-                getApp().device = {
+                var app = getApp();
+                app.device = {
                     deviceId: targetMac,
                     deviceName: targetMac,
                     deviceMac: targetMac,
                     machineid: targetMac,
                     factoryName: "XT"
                 };
+                app.userId = app.userId || "0000000000000000";
+                app.cardId = app.cardId || "00000000";
 
                 // 执行开关水
                 var switcher = require("3CFBD57594FC73BF5A9DBD72A447E8C0.js");
