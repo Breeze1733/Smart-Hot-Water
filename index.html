@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>智能热水控制</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 360px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        h2 { font-size: 22px; margin-bottom: 20px; color: #38bdf8; }
+
+        .input-group { margin-bottom: 24px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+        .input-group input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-family: monospace;
+            outline: none;
+        }
+        .input-group input:focus { border-color: #38bdf8; }
+
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        .btn {
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-open { background: linear-gradient(135deg, #0284c7, #2563eb); }
+        .btn-close { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>智能热水控制</h2>
+
+        <div class="input-group">
+            <label for="macInput">设备 MAC / 水表编号</label>
+            <input type="text" id="macInput" value="00815510724116" oninput="updateMac(this.value)">
+        </div>
+
+        <div class="btn-grid">
+            <button class="btn btn-open" onclick="openWater()">点开水</button>
+            <button class="btn btn-close" onclick="closeWater()">点关水</button>
+        </div>
+    </div>
+
+    <!-- 引入极简逻辑驱动包 -->
+    <script src="light.js"></script>
+    <script>
+        // 获取前端页面逻辑控制对象
+        var page = require("pages/index/index.js");
+
+        // 修改 myMac
+        function updateMac(val) {
+            page.data.myMac = val.trim();
+        }
+
+        // 点开水
+        function openWater() {
+            page.openWater();
+        }
+
+        // 点关水
+        function closeWater() {
+            page.closeWater();
+        }
+    </script>
+</body>
+</html>

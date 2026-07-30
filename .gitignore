@@ -1,1 +1,27 @@
+# Spec workflow
 .spec-workflow/
+
+# Android & Gradle Build Artifacts
+.gradle/
+build/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
+# Generated APKs & Dex
+*.apk
+*.ap_
+*.dex
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# Logs & Temporary files
+*.log
+tmp/
