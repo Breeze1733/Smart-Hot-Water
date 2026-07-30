@@ -112,25 +112,32 @@
     <script src="light.js"></script>
     <script>
         // 获取前端页面逻辑控制对象
-        var page = require("pages/index/index.js");
+        var page;
+        try {
+            page = require("pages/index/index.js");
+        } catch (e) {
+            page = {};
+        }
 
-        // 页面加载时从 SharedPreferences 恢复 MAC 到输入框
+        // 页面加载时恢复 MAC（原生优先，localStorage 兜底）
         (function() {
-            var savedMac = AppNativeBle.loadMac();
-            if (savedMac) {
-                document.getElementById("macInput").value = savedMac;
+            var mac = "";
+            try { mac = AppNativeBle.loadMac(); } catch (e) {}
+            if (!mac) {
+                try { mac = localStorage.getItem("myMac") || ""; } catch (e) {}
+            }
+            if (mac) {
+                document.getElementById("macInput").value = mac;
             }
         })();
 
-        // 确定保存：从输入框读取并通过原生桥存入 SharedPreferences
+        // 确定保存：双写 SharedPreferences + localStorage
         function confirmMac() {
             var mac = document.getElementById("macInput").value.trim();
-            if (mac) {
-                AppNativeBle.saveMac(mac);
-                alert("已保存");
-            } else {
-                alert("请输入 MAC 地址");
-            }
+            if (!mac) { alert("请输入 MAC 地址"); return; }
+            try { AppNativeBle.saveMac(mac); } catch (e) {}
+            try { localStorage.setItem("myMac", mac); } catch (e) {}
+            alert("已保存");
         }
 
         // 实时从输入框读取 MAC 并开关水

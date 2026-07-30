@@ -7,6 +7,7 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import org.json.JSONObject;
@@ -43,7 +44,7 @@ public class NativeBleBridge {
     @JavascriptInterface
     public void saveMac(String mac) {
         SharedPreferences prefs = context.getSharedPreferences("smart_water", Context.MODE_PRIVATE);
-        prefs.edit().putString("myMac", mac).apply();
+        prefs.edit().putString("myMac", mac).commit();
     }
 
     @JavascriptInterface
@@ -56,7 +57,7 @@ public class NativeBleBridge {
     public void connect(String paramsJson) {
         try {
             JSONObject json = new JSONObject(paramsJson);
-            String targetMac = json.optString("mac", "00815510724116");
+            String targetMac = json.optString("mac", "");
 
             disconnect("");
 
@@ -73,7 +74,11 @@ public class NativeBleBridge {
                     String address = device.getAddress();
                     if ((name != null && name.contains(targetMac)) || (address != null && address.equals(targetMac))) {
                         scanner.stopScan(this);
-                        bluetoothGatt = device.connectGatt(context, false, gattCallback);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE, BluetoothDevice.PHY_LE_1M, null);
+                        } else {
+                            bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+                        }
                     }
                 }
             };
@@ -84,6 +89,7 @@ public class NativeBleBridge {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @JavascriptInterface
     public void write(String paramsJson) {
         if (bluetoothGatt != null && writeCharacteristic != null) {
@@ -91,8 +97,12 @@ public class NativeBleBridge {
                 JSONObject json = new JSONObject(paramsJson);
                 String hexData = json.optString("value");
                 byte[] bytes = hexToBytes(hexData);
-                writeCharacteristic.setValue(bytes);
-                bluetoothGatt.writeCharacteristic(writeCharacteristic);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    bluetoothGatt.writeCharacteristic(writeCharacteristic, bytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                } else {
+                    writeCharacteristic.setValue(bytes);
+                    bluetoothGatt.writeCharacteristic(writeCharacteristic);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -108,6 +118,7 @@ public class NativeBleBridge {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -129,8 +140,12 @@ public class NativeBleBridge {
                         BluetoothGattDescriptor descriptor = notifyChar.getDescriptor(
                                 UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
                         if (descriptor != null) {
-                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                            gatt.writeDescriptor(descriptor);
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                gatt.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            } else {
+                                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                                gatt.writeDescriptor(descriptor);
+                            }
                         }
                     }
                 }
@@ -138,11 +153,19 @@ public class NativeBleBridge {
         }
 
         @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value) {
+            handleNotify(value);
+        }
+
+        @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            byte[] value = characteristic.getValue();
+            handleNotify(characteristic.getValue());
+        }
+
+        private void handleNotify(byte[] value) {
             String hexStr = bytesToHex(value);
             webView.post(() -> webView.evaluateJavascript(
-                "javascript:if(window.AppNativeBle && window.AppNativeBle.notifyData){ window.AppNativeBle.notifyData('" + hexStr + "'); }", 
+                "javascript:if(window.AppNativeBle && window.AppNativeBle.notifyData){ window.AppNativeBle.notifyData('" + hexStr + "'); }",
                 null
             ));
         }
