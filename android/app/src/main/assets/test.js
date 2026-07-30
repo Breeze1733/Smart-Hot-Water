@@ -7,7 +7,9 @@ var __WXML_GLOBAL__ = __WXML_GLOBAL__ || {};
 var __wxAppCurrentFile__ = __wxAppCurrentFile__ || "";
 var Component = Component || function() {};
 
-var _modules = {};
+var _modules = {
+    "app.js": { factory: function(){}, exports: {}, loaded: true }
+};
 var _global = typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : {});
 
 _global.publishDomainComponents = _global.publishDomainComponents || function() {};
@@ -9228,7 +9230,7 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
                             b.setStorageSync("nbOpen", 1), m(!0)
                         })).catch((function(t) {
                             return m(!1, t)
-                        })) : (m(!1, n || { title: "开阀异常", errMsg: "开阀失败" }), o())
+                        })) : n && n.errMsg ? m(!1, n) : o()
                     }));
                     break;
                 case "关阀":
@@ -9557,11 +9559,40 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
         switchTab: function(e) {},
         getLocation: function(e) {
             e = e || {};
-            e.fail && e.fail({ errMsg: "getLocation:fail" });
+            var res = { latitude: 30.0, longitude: 120.0, errMsg: "getLocation:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
-        openSetting: function(e) {},
-        getSetting: function(e) {},
-        authorize: function(e) {},
+        openSetting: function(e) {
+            e = e || {};
+            var res = { authSetting: { "scope.userLocation": true, "scope.bluetooth": true } };
+            e.success && e.success(res);
+            return Promise.resolve(res);
+        },
+        getSetting: function(e) {
+            e = e || {};
+            var res = { authSetting: { "scope.userLocation": true, "scope.bluetooth": true } };
+            e.success && e.success(res);
+            return Promise.resolve(res);
+        },
+        authorize: function(e) {
+            e = e || {};
+            var res = { errMsg: "authorize:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
+        },
+        getAppAuthorizeSetting: function() {
+            return { locationAuthorized: "authorized", bluetoothAuthorized: "authorized" };
+        },
+        getSystemSetting: function() {
+            return { locationEnabled: true, bluetoothEnabled: true };
+        },
+        getAppBaseInfo: function() {
+            return { enableDebug: true };
+        },
+        getAccountInfoSync: function() {
+            return { miniProgram: { envVersion: "release" } };
+        },
         showLoading: function(e) {
             var title = typeof e === "string" ? e : (e ? e.title : "");
             if (typeof window !== "undefined" && window.logToConsole) {
@@ -9584,8 +9615,9 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
         },
         request: function(e) {
             e = e || {};
-            e.fail && e.fail({ errMsg: "request:fail" });
-            return Promise.reject({ errMsg: "request:fail" });
+            var res = { statusCode: 200, data: { status: true, Result: 1, errMsg: "OK", code: "0" } };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         getUpdateManager: function() {
             return {};
@@ -11581,7 +11613,7 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
                         A.setStorageSync("nbOpen", 1), o(!0)
                     })).catch((function(n) {
                         return o(!1, n)
-                    })) : (o(!1, n || { title: "开阀异常", errMsg: "开阀失败" }), i())
+                    })) : n && n.errMsg ? o(!1, n) : i()
                 }))
             } else "关阀" == t ? (u("关阀中...", "index"), P("1005").then((function(n) {
                 if ("10052" == n.code) return P("2006");
@@ -11591,7 +11623,7 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
             })).catch((function(n) {
                 s(t + "错误b", n), n && "返回超时" == n.title ? e("", "请按水控器蓝色按键3秒以上直至显示0！").then((function(n) {
                     o(!0)
-                })) : (o(!1, n || { title: "开阀异常", errMsg: "开阀失败" }), i())
+                })) : n && n.errMsg ? o(!1, n) : i()
             }))) : 0 == t.indexOf("绑定") ? ("绑定" == t && u("连接中...", "index"), P("1001").then((function(n) {
                 return P("1007")
             })).then((function(n) {

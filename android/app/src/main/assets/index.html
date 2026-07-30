@@ -344,13 +344,14 @@
                 notifyData: function(hexStr) {
                     try {
                         window.logToConsole("[BLE Native Notify] 收到水表回复 Notify Hex: " + hexStr, "success");
-                        if (_bleDataCb) {
+                        var cb = window._bleDataCb || _bleDataCb;
+                        if (cb) {
                             var bytes = [];
                             for (var i = 0; i < hexStr.length; i += 2) {
                                 bytes.push(parseInt(hexStr.substr(i, 2), 16));
                             }
                             var buffer = new Uint8Array(bytes).buffer;
-                            _bleDataCb(buffer);
+                            cb(buffer);
                         } else {
                             window.logToConsole("[BLE Native Notify Warning] 收到 Notify 数据但 JS 未设置 _bleDataCb!", "warn");
                         }
