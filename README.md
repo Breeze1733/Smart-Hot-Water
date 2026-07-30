@@ -7,7 +7,6 @@ Smart-Hot-Water
 ├── README.md
 ├── raw/                                  # 参考与备份
 │   ├── app-service.js                    # 原版源码备份
-│   ├── test.js                           # 全量逻辑调试脚本
 │   └── analyse.md                        # 分析笔记
 └── android/                              # Android 12+ 原生 App 工程
     ├── build.gradle                      # Gradle 根构建配置
@@ -20,7 +19,7 @@ Smart-Hot-Water
             ├── AndroidManifest.xml        # Android 12+ 蓝牙权限配置
             ├── assets/                   # WebView 加载的静态资源
             │   ├── index.html            # 控水界面
-            │   └── light.js              # 核心逻辑脚本
+            │   └── test.js               # 全量逻辑调试脚本
             └── java/com/example/smartwater/
                 ├── MainActivity.java      # 主界面 Activity
                 └── NativeBleBridge.java   # 原生 BLE GATT 适配器
