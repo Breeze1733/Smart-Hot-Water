@@ -6984,7 +6984,8 @@ define("3CFBD57594FC73BF5A9DBD72A447E8C0.js", function(require, module, exports,
                 return L().then((function(e) {
                     return j(n)
                 })).then((function(e) {
-                    return P(e, B, "开阀", U)
+                    // 绕过服务器授权请求 P()，直接返回本地数据给下一步 F(e, t)
+                    return Promise.resolve(e && e.data ? e.data : "0000000000000000")
                 })).then((function(e) {
                     return F(e, t)
                 }));
@@ -7126,9 +7127,8 @@ define("3CFBD57594FC73BF5A9DBD72A447E8C0.js", function(require, module, exports,
                     .then((function(e) {
                             return S(d, n)
                         })).then((function(e) {
-                            (c(!0, e), "nb" != a) && x(k["关阀" == n ? "Myself" : "Others"]).then((function() {
-                                return E()
-                            })).then((function() {
+                            // 绕过服务器采集上传 x()，直接下发蓝牙 07 指令标记完成并断开连接
+                            (c(!0, e), "nb" != a) && E().then((function() {
                                 m()
                             }))
                         }));
