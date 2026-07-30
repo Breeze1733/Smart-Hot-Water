@@ -5,6 +5,7 @@ import android.bluetooth.*;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanRecord;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -12,6 +13,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import org.json.JSONObject;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * JSBridge 原生蓝牙代理类 (带控制台链路日志诊断功能)
@@ -107,12 +109,20 @@ public class NativeBleBridge {
                 public void onScanResult(int callbackType, ScanResult result) {
                     if (result == null) return;
                     BluetoothDevice device = result.getDevice();
-                    if (device == null) return;
-                    String name = device.getName();
-                    String address = device.getAddress();
-                    if ((name != null && name.contains(targetMac)) || (address != null && address.equals(targetMac))) {
+                    String address = device.getAddress() != null ? device.getAddress() : "";
+                    String name = device.getName() != null ? device.getName() : "";
+                    ScanRecord record = result.getScanRecord();
+                    String localName = (record != null && record.getDeviceName() != null) ? record.getDeviceName() : "";
+
+                    boolean matched = address.equalsIgnoreCase(targetMac)
+                                   || name.equalsIgnoreCase(targetMac)
+                                   || name.contains(targetMac)
+                                   || localName.equalsIgnoreCase(targetMac)
+                                   || localName.contains(targetMac);
+
+                    if (matched) {
                         scanner.stopScan(this);
-                        logToJs("[Android BLE] 匹配到设备: " + name + " [" + address + "]，发起 GATT 连接...", "info");
+                        logToJs("[Android BLE] 匹配到设备编号: " + targetMac + " (广播名: " + name + ", MAC: " + address + ")，发起 GATT 连接...", "info");
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE, BluetoothDevice.PHY_LE_1M, null);
                         } else {
@@ -144,9 +154,16 @@ public class NativeBleBridge {
                 String hexData = json.optString("value");
                 logToJs("[Android BLE Write] 向特征值 " + WRITE_UUID + " 写入 Hex: " + hexData, "ble");
                 byte[] bytes = hexToBytes(hexData);
+                int writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT;
+                int props = writeCharacteristic.getProperties();
+                if ((props & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
+                    writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE;
+                }
+                writeCharacteristic.setWriteType(writeType);
+
                 boolean success;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    int res = bluetoothGatt.writeCharacteristic(writeCharacteristic, bytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    int res = bluetoothGatt.writeCharacteristic(writeCharacteristic, bytes, writeType);
                     success = (res == BluetoothStatusCodes.SUCCESS);
                 } else {
                     writeCharacteristic.setValue(bytes);
@@ -242,7 +259,7 @@ public class NativeBleBridge {
                 logToJs("[Android BLE] 发现的全部服务列表: " + sbServices.toString(), "info");
 
                 if (targetService != null && targetWriteChar != null && targetNotifyChar != null) {
-                    this.writeCharacteristic = targetWriteChar;
+                    NativeBleBridge.this.writeCharacteristic = targetWriteChar;
                     String serviceUuidShort = targetService.getUuid().toString();
                     String writeUuidShort = targetWriteChar.getUuid().toString();
                     String notifyUuidShort = targetNotifyChar.getUuid().toString();
