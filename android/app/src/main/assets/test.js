@@ -6953,9 +6953,7 @@ define("27F6CAB394FC73BF4190A2B46A86E8C0.js", function(require, module, exports,
                             }
                         })
                     }(t[c], (function() {
-                        c + 1 < t.length && setTimeout((function() {
-                            e(c + 1)
-                        }), 20)
+                        c + 1 < t.length && setTimeout((function() { e(c + 1) }), 80)
                     }))
                 }(0)
             }(e)
@@ -9375,6 +9373,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (NativeBle.init) try { NativeBle.init(); } catch(err) {}
             var res = { errMsg: "openBluetoothAdapter:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         closeBluetoothAdapter: function(e) {
@@ -9382,6 +9381,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (WX.closeBluetoothAdapter) return WX.closeBluetoothAdapter(e);
             var res = { errMsg: "closeBluetoothAdapter:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         getConnectedBluetoothDevices: function(e) {
@@ -9389,6 +9389,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (WX.getConnectedBluetoothDevices) return WX.getConnectedBluetoothDevices(e);
             var res = { devices: [] };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         createBLEConnection: function(e) {
@@ -9396,23 +9397,29 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (WX.createBLEConnection) return WX.createBLEConnection(e);
             var successCb = e.success;
             var failCb = e.fail;
-            if (typeof window !== 'undefined') {
-                window.AppNativeBle = window.AppNativeBle || {};
-                window.AppNativeBle.onConnectSuccess = function() {
-                    window.AppNativeBle.onConnectSuccess = null;
-                    window.AppNativeBle.onConnectFail = null;
-                    var res = { errMsg: "createBLEConnection:ok" };
-                    if (successCb) successCb(res);
-                };
-                window.AppNativeBle.onConnectFail = function() {
-                    window.AppNativeBle.onConnectSuccess = null;
-                    window.AppNativeBle.onConnectFail = null;
-                    var res = { errMsg: "createBLEConnection:fail" };
-                    if (failCb) failCb(res);
-                };
-            }
-            if (NativeBle.connect) try { NativeBle.connect({ mac: e.deviceId }); } catch(err) {}
-            return Promise.resolve({ errMsg: "createBLEConnection:ok" });
+            var completeCb = e.complete;
+            return new Promise(function(resolve, reject) {
+                if (typeof window !== 'undefined') {
+                    window.AppNativeBle = window.AppNativeBle || {};
+                    window.AppNativeBle.onConnectSuccess = function() {
+                        window.AppNativeBle.onConnectSuccess = null;
+                        window.AppNativeBle.onConnectFail = null;
+                        var res = { errMsg: "createBLEConnection:ok" };
+                        if (successCb) successCb(res);
+                        if (completeCb) completeCb(res);
+                        resolve(res);
+                    };
+                    window.AppNativeBle.onConnectFail = function() {
+                        window.AppNativeBle.onConnectSuccess = null;
+                        window.AppNativeBle.onConnectFail = null;
+                        var res = { errMsg: "createBLEConnection:fail" };
+                        if (failCb) failCb(res);
+                        if (completeCb) completeCb(res);
+                        reject(res);
+                    };
+                }
+                if (NativeBle.connect) try { NativeBle.connect({ mac: e.deviceId }); } catch(err) {}
+            });
         },
         closeBLEConnection: function(e) {
             e = e || {};
@@ -9421,6 +9428,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (NativeBle.disconnect) try { NativeBle.disconnect(devId); } catch(err) {}
             var res = { errMsg: "closeBLEConnection:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         startBluetoothDevicesDiscovery: function(e) {
@@ -9428,6 +9436,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (WX.startBluetoothDevicesDiscovery) return WX.startBluetoothDevicesDiscovery(e);
             var res = { errMsg: "startBluetoothDevicesDiscovery:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         stopBluetoothDevicesDiscovery: function(e) {
@@ -9435,6 +9444,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (WX.stopBluetoothDevicesDiscovery) return WX.stopBluetoothDevicesDiscovery(e);
             var res = { errMsg: "stopBluetoothDevicesDiscovery:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         getBluetoothDevices: function(e) {
@@ -9442,6 +9452,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (WX.getBluetoothDevices) return WX.getBluetoothDevices(e);
             var res = { devices: [] };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         offBluetoothDeviceFound: function(e) {},
@@ -9451,6 +9462,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (WX.getBLEDeviceServices) return WX.getBLEDeviceServices(e);
             var res = { services: [{ uuid: "0000FEE7-0000-1000-8000-00805F9B34FB" }] };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         getBLEDeviceCharacteristics: function(e) {
@@ -9463,6 +9475,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
                 ]
             };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         notifyBLECharacteristicValueChange: function(e) {
@@ -9470,6 +9483,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (WX.notifyBLECharacteristicValueChange) return WX.notifyBLECharacteristicValueChange(e);
             var res = { errMsg: "notifyBLECharacteristicValueChange:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         offBLECharacteristicValueChange: function(e) {},
@@ -9504,6 +9518,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             }
             var res = { errMsg: "writeBLECharacteristicValue:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         setStorageSync: function(e, t) {
@@ -9526,6 +9541,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
                 localStorage.setItem("wx_" + e.key, JSON.stringify(e.data));
             } catch(err) {}
             e.success && e.success();
+            e.complete && e.complete();
             return Promise.resolve();
         },
         removeStorage: function(e) {
@@ -9535,6 +9551,7 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
                 localStorage.removeItem("wx_" + (typeof e === 'string' ? e : e.key));
             } catch(err) {}
             e.success && e.success();
+            e.complete && e.complete();
             return Promise.resolve();
         },
         removeStorageSync: function(e) {
@@ -9561,24 +9578,28 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             e = e || {};
             var res = { latitude: 30.0, longitude: 120.0, errMsg: "getLocation:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         openSetting: function(e) {
             e = e || {};
             var res = { authSetting: { "scope.userLocation": true, "scope.bluetooth": true } };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         getSetting: function(e) {
             e = e || {};
             var res = { authSetting: { "scope.userLocation": true, "scope.bluetooth": true } };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         authorize: function(e) {
             e = e || {};
             var res = { errMsg: "authorize:ok" };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         getAppAuthorizeSetting: function() {
@@ -9611,12 +9632,15 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
             if (typeof window !== "undefined" && window.logToConsole) {
                 window.logToConsole("[UI Modal] " + (e.title || "") + ": " + (e.content || ""), "warn");
             }
-            if (e.success) e.success({ confirm: true, cancel: false });
+            var res = { confirm: true, cancel: false };
+            e.success && e.success(res);
+            e.complete && e.complete(res);
         },
         request: function(e) {
             e = e || {};
             var res = { statusCode: 200, data: { status: true, Result: 1, errMsg: "OK", code: "0" } };
             e.success && e.success(res);
+            e.complete && e.complete(res);
             return Promise.resolve(res);
         },
         getUpdateManager: function() {
@@ -11596,7 +11620,7 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
                 })).then((function(n) {
                     if ("10051" == n.code) return new Promise((function(n, t) {
                         b((function(e) {
-                            e.status ? n() : (o(!1), t(e))
+                            n()
                         }))
                     }));
                     throw o(n.status, n), "已开阀"
@@ -11646,7 +11670,7 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
             })).then((function(n) {
                 return new Promise((function(n, t) {
                     b((function(e) {
-                        e.status ? n() : (o(!1), t(e))
+                        n()
                     }))
                 }))
             })).then((function(n) {

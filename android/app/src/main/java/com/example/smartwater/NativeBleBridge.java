@@ -154,23 +154,38 @@ public class NativeBleBridge {
                 String hexData = json.optString("value");
                 logToJs("[Android BLE Write] 向特征值 " + WRITE_UUID + " 写入 Hex: " + hexData, "ble");
                 byte[] bytes = hexToBytes(hexData);
-                int writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT;
                 int props = writeCharacteristic.getProperties();
+                int writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT;
                 if ((props & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
                     writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE;
                 }
                 writeCharacteristic.setWriteType(writeType);
 
-                boolean success;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    int res = bluetoothGatt.writeCharacteristic(writeCharacteristic, bytes, writeType);
-                    success = (res == BluetoothStatusCodes.SUCCESS);
-                } else {
-                    writeCharacteristic.setValue(bytes);
-                    success = bluetoothGatt.writeCharacteristic(writeCharacteristic);
-                }
+                boolean success = doWriteBytes(bytes, writeType);
                 if (!success) {
-                    logToJs("[Android BLE Error] writeCharacteristic 接口返回 false，写入可能失败", "warn");
+                    final int fallbackType = (writeType == BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) ?
+                        BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT : BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE;
+                    logToJs("[Android BLE Warning] writeCharacteristic 返回 false，50ms 后尝试降级模式重试...", "warn");
+                    final byte[] retryBytes = bytes;
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (bluetoothGatt != null && writeCharacteristic != null) {
+                                boolean retryOk = doWriteBytes(retryBytes, fallbackType);
+                                if (!retryOk) {
+                                    logToJs("[Android BLE Warning] 降级写入仍返回 false，80ms 后尝试兼容写入...", "warn");
+                                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (bluetoothGatt != null && writeCharacteristic != null) {
+                                                doWriteBytes(retryBytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                                            }
+                                        }
+                                    }, 80);
+                                }
+                            }
+                        }
+                    }, 50);
                 }
             } catch (Exception e) {
                 logToJs("[Android BLE Error] write 异常: " + e.getMessage(), "error");
@@ -178,6 +193,18 @@ public class NativeBleBridge {
             }
         } else {
             logToJs("[Android BLE Error] write 失败: gatt 或 writeCharacteristic 未就绪", "error");
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean doWriteBytes(byte[] bytes, int writeType) {
+        if (bluetoothGatt == null || writeCharacteristic == null) return false;
+        try {
+            writeCharacteristic.setWriteType(writeType);
+            writeCharacteristic.setValue(bytes);
+            return bluetoothGatt.writeCharacteristic(writeCharacteristic);
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -204,6 +231,15 @@ public class NativeBleBridge {
                 gatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 logToJs("[Android BLE Warning] GATT 已断开连接", "warn");
+            }
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                logToJs("[Android BLE] 特征值底层写入确认成功 (status=" + status + ")", "info");
+            } else {
+                logToJs("[Android BLE Warning] 特征值底层写入返回非零状态码: status=" + status, "warn");
             }
         }
 
