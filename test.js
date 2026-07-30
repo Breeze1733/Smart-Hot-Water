@@ -9286,66 +9286,121 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
 });
 define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports, window, document, frames, self, location, navigator, localStorage, history, Caches, screen, alert, confirm, prompt, XMLHttpRequest, WebSocket, Reporter, webkit, WeixinJSCore) {
     "use strict";
+    var WX = typeof wx !== 'undefined' ? wx : (window.wx || {});
+    var NativeBle = typeof window !== 'undefined' ? (window.AppNativeBle || {}) : {};
+
     module.exports = {
-        offBluetoothAdapterStateChange: function(e) {
-            wx.offBluetoothAdapterStateChange(e)
-        },
-        onBluetoothAdapterStateChange: function(e) {
-            wx.onBluetoothAdapterStateChange(e)
-        },
-        offBLEConnectionStateChange: function(e) {
-            wx.offBLEConnectionStateChange(e)
-        },
-        onBLEConnectionStateChange: function(e) {
-            wx.onBLEConnectionStateChange(e)
-        },
+        offBluetoothAdapterStateChange: function(e) { WX.offBluetoothAdapterStateChange ? WX.offBluetoothAdapterStateChange(e) : null; },
+        onBluetoothAdapterStateChange: function(e) { WX.onBluetoothAdapterStateChange ? WX.onBluetoothAdapterStateChange(e) : null; },
+        offBLEConnectionStateChange: function(e) { WX.offBLEConnectionStateChange ? WX.offBLEConnectionStateChange(e) : null; },
+        onBLEConnectionStateChange: function(e) { WX.onBLEConnectionStateChange ? WX.onBLEConnectionStateChange(e) : null; },
         openBluetoothAdapter: function(e) {
-            return wx.openBluetoothAdapter(e)
+            e = e || {};
+            if (WX.openBluetoothAdapter) return WX.openBluetoothAdapter(e);
+            if (NativeBle.init) return NativeBle.init();
+            var res = { errMsg: "openBluetoothAdapter:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         closeBluetoothAdapter: function(e) {
-            return wx.closeBluetoothAdapter(e)
+            e = e || {};
+            if (WX.closeBluetoothAdapter) return WX.closeBluetoothAdapter(e);
+            var res = { errMsg: "closeBluetoothAdapter:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         createBLEConnection: function(e) {
-            return wx.createBLEConnection(e)
+            e = e || {};
+            if (WX.createBLEConnection) return WX.createBLEConnection(e);
+            if (NativeBle.connect) return NativeBle.connect({ mac: e.deviceId });
+            var res = { errMsg: "createBLEConnection:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         closeBLEConnection: function(e) {
-            return wx.closeBLEConnection(e)
+            e = e || {};
+            var devId = typeof e === 'string' ? e : (e ? e.deviceId : '');
+            if (WX.closeBLEConnection) return WX.closeBLEConnection(e);
+            if (NativeBle.disconnect) return NativeBle.disconnect(devId);
+            var res = { errMsg: "closeBLEConnection:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         startBluetoothDevicesDiscovery: function(e) {
-            return wx.startBluetoothDevicesDiscovery(e)
+            e = e || {};
+            if (WX.startBluetoothDevicesDiscovery) return WX.startBluetoothDevicesDiscovery(e);
+            var res = { errMsg: "startBluetoothDevicesDiscovery:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         stopBluetoothDevicesDiscovery: function(e) {
-            return wx.stopBluetoothDevicesDiscovery(e)
+            e = e || {};
+            if (WX.stopBluetoothDevicesDiscovery) return WX.stopBluetoothDevicesDiscovery(e);
+            var res = { errMsg: "stopBluetoothDevicesDiscovery:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         getBluetoothDevices: function(e) {
-            return wx.getBluetoothDevices(e)
+            e = e || {};
+            if (WX.getBluetoothDevices) return WX.getBluetoothDevices(e);
+            var res = { devices: [] };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
-        offBluetoothDeviceFound: function(e) {
-            wx.offBluetoothDeviceFound(e)
-        },
-        onBluetoothDeviceFound: function(e) {
-            wx.onBluetoothDeviceFound(e)
-        },
+        offBluetoothDeviceFound: function(e) { WX.offBluetoothDeviceFound ? WX.offBluetoothDeviceFound(e) : null; },
+        onBluetoothDeviceFound: function(e) { WX.onBluetoothDeviceFound ? WX.onBluetoothDeviceFound(e) : null; },
         getBLEDeviceServices: function(e) {
-            return wx.getBLEDeviceServices(e)
+            e = e || {};
+            if (WX.getBLEDeviceServices) return WX.getBLEDeviceServices(e);
+            if (NativeBle.getServices) return NativeBle.getServices(e.deviceId);
+            var res = { services: [{ uuid: "0000FEE7-0000-1000-8000-00805F9B34FB" }] };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         getBLEDeviceCharacteristics: function(e) {
-            return wx.getBLEDeviceCharacteristics(e)
+            e = e || {};
+            if (WX.getBLEDeviceCharacteristics) return WX.getBLEDeviceCharacteristics(e);
+            if (NativeBle.getCharacteristics) return NativeBle.getCharacteristics(e.deviceId, e.serviceId);
+            var res = {
+                characteristics: [
+                    { uuid: "000036F5-0000-1000-8000-00805F9B34FB", properties: { notify: true } },
+                    { uuid: "000036F6-0000-1000-8000-00805F9B34FB", properties: { write: true } }
+                ]
+            };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         notifyBLECharacteristicValueChange: function(e) {
-            return wx.notifyBLECharacteristicValueChange(e)
+            e = e || {};
+            if (WX.notifyBLECharacteristicValueChange) return WX.notifyBLECharacteristicValueChange(e);
+            if (NativeBle.startNotification) return NativeBle.startNotification(e);
+            var res = { errMsg: "notifyBLECharacteristicValueChange:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
-        offBLECharacteristicValueChange: function(e) {
-            wx.offBLECharacteristicValueChange(e)
-        },
+        offBLECharacteristicValueChange: function(e) { WX.offBLECharacteristicValueChange ? WX.offBLECharacteristicValueChange(e) : null; },
         onBLECharacteristicValueChange: function(e) {
-            wx.onBLECharacteristicValueChange(e)
+            if (WX.onBLECharacteristicValueChange) return WX.onBLECharacteristicValueChange(e);
+            if (NativeBle.onDataReceived) {
+                NativeBle.onDataReceived(function(data) {
+                    e && e({ value: data.buffer || data });
+                });
+            }
         },
         writeBLECharacteristicValue: function(e) {
-            return wx.writeBLECharacteristicValue(e)
+            e = e || {};
+            if (WX.writeBLECharacteristicValue) return WX.writeBLECharacteristicValue(e);
+            if (NativeBle.write) return NativeBle.write(e);
+            var res = { errMsg: "writeBLECharacteristicValue:ok" };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         getConnectedBluetoothDevices: function(e) {
-            return wx.getConnectedBluetoothDevices(e)
+            e = e || {};
+            if (WX.getConnectedBluetoothDevices) return WX.getConnectedBluetoothDevices(e);
+            var res = { devices: [] };
+            e.success && e.success(res);
+            return Promise.resolve(res);
         },
         setStorageSync: function(e, t) {
             wx.setStorageSync(e, t)
