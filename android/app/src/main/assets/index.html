@@ -56,6 +56,22 @@
         }
         .input-group input:focus { border-color: #38bdf8; }
 
+        .input-row { display: flex; gap: 8px; }
+        .input-row input { flex: 1; }
+        .btn-confirm {
+            background: #38bdf8;
+            border: none;
+            border-radius: 12px;
+            padding: 0 18px;
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: transform 0.1s;
+        }
+        .btn-confirm:active { transform: scale(0.95); }
+
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
         .btn {
@@ -80,12 +96,15 @@
 
         <div class="input-group">
             <label for="macInput">设备 MAC / 水表编号</label>
-            <input type="text" id="macInput" value="00815510724116" oninput="updateMac(this.value)">
+            <div class="input-row">
+                <input type="text" id="macInput" value="" placeholder="请输入 MAC 地址">
+                <button class="btn-confirm" onclick="confirmMac()">确定</button>
+            </div>
         </div>
 
         <div class="btn-grid">
-            <button class="btn btn-open" onclick="openWater()">点开水</button>
-            <button class="btn btn-close" onclick="closeWater()">点关水</button>
+            <button class="btn btn-open" onclick="openWater()">开水</button>
+            <button class="btn btn-close" onclick="closeWater()">关水</button>
         </div>
     </div>
 
@@ -95,19 +114,34 @@
         // 获取前端页面逻辑控制对象
         var page = require("pages/index/index.js");
 
-        // 修改 myMac
-        function updateMac(val) {
-            page.data.myMac = val.trim();
+        // 页面加载时从 SharedPreferences 恢复 MAC 到输入框
+        (function() {
+            var savedMac = AppNativeBle.loadMac();
+            if (savedMac) {
+                document.getElementById("macInput").value = savedMac;
+            }
+        })();
+
+        // 确定保存：从输入框读取并通过原生桥存入 SharedPreferences
+        function confirmMac() {
+            var mac = document.getElementById("macInput").value.trim();
+            if (mac) {
+                AppNativeBle.saveMac(mac);
+                alert("已保存");
+            } else {
+                alert("请输入 MAC 地址");
+            }
         }
 
-        // 点开水
+        // 实时从输入框读取 MAC 并开关水
         function openWater() {
-            page.openWater();
+            var mac = document.getElementById("macInput").value.trim();
+            page.switchWater(true, mac);
         }
 
-        // 点关水
         function closeWater() {
-            page.closeWater();
+            var mac = document.getElementById("macInput").value.trim();
+            page.switchWater(false, mac);
         }
     </script>
 </body>

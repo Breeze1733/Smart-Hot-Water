@@ -2,7 +2,11 @@ package com.example.smartwater;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.*;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import org.json.JSONObject;
@@ -37,6 +41,18 @@ public class NativeBleBridge {
     public void init() {}
 
     @JavascriptInterface
+    public void saveMac(String mac) {
+        SharedPreferences prefs = context.getSharedPreferences("smart_water", Context.MODE_PRIVATE);
+        prefs.edit().putString("myMac", mac).apply();
+    }
+
+    @JavascriptInterface
+    public String loadMac() {
+        SharedPreferences prefs = context.getSharedPreferences("smart_water", Context.MODE_PRIVATE);
+        return prefs.getString("myMac", "");
+    }
+
+    @JavascriptInterface
     public void connect(String paramsJson) {
         try {
             JSONObject json = new JSONObject(paramsJson);
@@ -44,14 +60,25 @@ public class NativeBleBridge {
 
             disconnect("");
 
-            bluetoothAdapter.startLeScan((device, rssi, scanRecord) -> {
-                String name = device.getName();
-                String address = device.getAddress();
-                if ((name != null && name.contains(targetMac)) || (address != null && address.equals(targetMac))) {
-                    bluetoothAdapter.stopLeScan(null);
-                    bluetoothGatt = device.connectGatt(context, false, gattCallback);
+            BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
+            if (scanner == null) {
+                return;
+            }
+
+            ScanCallback scanCallback = new ScanCallback() {
+                @Override
+                public void onScanResult(int callbackType, ScanResult result) {
+                    BluetoothDevice device = result.getDevice();
+                    String name = device.getName();
+                    String address = device.getAddress();
+                    if ((name != null && name.contains(targetMac)) || (address != null && address.equals(targetMac))) {
+                        scanner.stopScan(this);
+                        bluetoothGatt = device.connectGatt(context, false, gattCallback);
+                    }
                 }
-            });
+            };
+
+            scanner.startScan(scanCallback);
         } catch (Exception e) {
             e.printStackTrace();
         }

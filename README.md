@@ -4,27 +4,26 @@
 
 ```text
 Smart-Hot-Water
-├── README.md                      # 本说明文档
-├── index.html                     # Web 控水交互界面
-├── light.js                       # 轻量版脚本
-├── test.js                        # 全量逻辑调试脚本
-├── raw/
-│   └── app-service.js             # 原版源码文件备份
-└── android/                       # Android 12+ 原生 App 工程
-    ├── build.gradle               # Gradle 根构建配置
-    ├── settings.gradle            # Gradle 项目模块设置文件
-    ├── gradle.properties          # Gradle 属性配置文件 (启用 AndroidX)
-    ├── gradlew.bat                # Windows Gradle 批处理脚本
+├── README.md
+├── raw/                                  # 参考与备份
+│   ├── app-service.js                    # 原版源码备份
+│   ├── test.js                           # 全量逻辑调试脚本
+│   └── analyse.md                        # 分析笔记
+└── android/                              # Android 12+ 原生 App 工程
+    ├── build.gradle                      # Gradle 根构建配置
+    ├── settings.gradle                   # Gradle 项目模块设置文件
+    ├── gradle.properties                 # Gradle 属性配置文件 (启用 AndroidX)
+    ├── gradlew.bat                       # Windows Gradle 批处理脚本
     └── app/
-        ├── build.gradle           # 应用 Module 构建配置
+        ├── build.gradle                  # 应用 Module 构建配置
         └── src/main/
-            ├── AndroidManifest.xml # Android 12+ 蓝牙权限配置
-            ├── assets/            # WebView 静态资产 (index.html & light.js)
-            │   ├── index.html
-            │   └── light.js
+            ├── AndroidManifest.xml        # Android 12+ 蓝牙权限配置
+            ├── assets/                   # WebView 加载的静态资源
+            │   ├── index.html            # 控水界面
+            │   └── light.js              # 核心逻辑脚本
             └── java/com/example/smartwater/
-                ├── MainActivity.java     # 主界面 Activity
-                └── NativeBleBridge.java  # 原生 BLE GATT 适配器
+                ├── MainActivity.java      # 主界面 Activity
+                └── NativeBleBridge.java   # 原生 BLE GATT 适配器
 ```
 
 ---

@@ -7549,28 +7549,9 @@ define("pages/index/index.js", function(require, module, exports, window, docume
         "use strict";
 
         Page({
-            data: {
-                myMac: "00815510724116" // 默认 MAC
-            },
-
-            // 修改输入框数字
-            onMacInput: function(e) {
-                this.setData({ myMac: e.detail.value.trim() });
-            },
-
-            // 点开水
-            openWater: function() {
-                this.switchWater(true, this.data.myMac);
-            },
-
-            // 点关水
-            closeWater: function() {
-                this.switchWater(false, this.data.myMac);
-            },
-
             // 核心控制
             switchWater: function(isOpen, macNumber) {
-                var targetMac = macNumber || "00815510724116";
+                var targetMac = macNumber;
 
                 // 强行指定设备参数
                 var app = getApp();
@@ -7586,7 +7567,15 @@ define("pages/index/index.js", function(require, module, exports, window, docume
 
                 // 执行开关水
                 var switcher = require("3CFBD57594FC73BF5A9DBD72A447E8C0.js");
-                switcher.switching(isOpen ? "开阀" : "关阀", function() {}, "ble", false);
+                var actionName = isOpen ? "开阀" : "关阀";
+                var callback = function(success, resultData) {
+                    if (success) {
+                        alert(actionName + " 成功");
+                    } else {
+                        alert(actionName + " 失败: " + JSON.stringify(resultData));
+                    }
+                };
+                switcher.switching(actionName, callback, "ble", false);
             }
         });
     });
