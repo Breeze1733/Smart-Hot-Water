@@ -280,12 +280,27 @@ public class NativeBleBridge {
                     } else {
                         logToJs("[Android BLE Warning] 描述符 2902 未找到，已直接使能 Notify 通知", "warn");
                     }
+                    webView.post(() -> {
+                        try {
+                            webView.evaluateJavascript("javascript:if(window.AppNativeBle && window.AppNativeBle.onConnectSuccess){ window.AppNativeBle.onConnectSuccess(); }", null);
+                        } catch (Exception e) { e.printStackTrace(); }
+                    });
                 } else {
                     logToJs("[Android BLE Error] 未能从该设备找到同时具备 Write 和 Notify 的特征通道！", "error");
+                    notifyConnectFail();
                 }
             } else {
                 logToJs("[Android BLE Error] 发现服务失败, status=" + status, "error");
+                notifyConnectFail();
             }
+        }
+
+        private void notifyConnectFail() {
+            webView.post(() -> {
+                try {
+                    webView.evaluateJavascript("javascript:if(window.AppNativeBle && window.AppNativeBle.onConnectFail){ window.AppNativeBle.onConnectFail(); }", null);
+                } catch (Exception e) { e.printStackTrace(); }
+            });
         }
 
         @Override

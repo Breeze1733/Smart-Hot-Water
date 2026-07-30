@@ -9228,7 +9228,7 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
                             b.setStorageSync("nbOpen", 1), m(!0)
                         })).catch((function(t) {
                             return m(!1, t)
-                        })) : n && n.errMsg ? m(!1, n) : o()
+                        })) : (m(!1, n || { title: "开阀异常", errMsg: "开阀失败" }), o())
                     }));
                     break;
                 case "关阀":
@@ -9392,10 +9392,25 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
         createBLEConnection: function(e) {
             e = e || {};
             if (WX.createBLEConnection) return WX.createBLEConnection(e);
+            var successCb = e.success;
+            var failCb = e.fail;
+            if (typeof window !== 'undefined') {
+                window.AppNativeBle = window.AppNativeBle || {};
+                window.AppNativeBle.onConnectSuccess = function() {
+                    window.AppNativeBle.onConnectSuccess = null;
+                    window.AppNativeBle.onConnectFail = null;
+                    var res = { errMsg: "createBLEConnection:ok" };
+                    if (successCb) successCb(res);
+                };
+                window.AppNativeBle.onConnectFail = function() {
+                    window.AppNativeBle.onConnectSuccess = null;
+                    window.AppNativeBle.onConnectFail = null;
+                    var res = { errMsg: "createBLEConnection:fail" };
+                    if (failCb) failCb(res);
+                };
+            }
             if (NativeBle.connect) try { NativeBle.connect({ mac: e.deviceId }); } catch(err) {}
-            var res = { errMsg: "createBLEConnection:ok" };
-            e.success && e.success(res);
-            return Promise.resolve(res);
+            return Promise.resolve({ errMsg: "createBLEConnection:ok" });
         },
         closeBLEConnection: function(e) {
             e = e || {};
