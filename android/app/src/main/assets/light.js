@@ -7555,6 +7555,8 @@ define("pages/index/index.js", function(require, module, exports, window, docume
 
                 // 强行指定设备参数
                 var app = getApp();
+                var factoryUtil = require("101E33B294FC73BF76785BB557A6E8C0.js");
+                app.factory = factoryUtil.getFactory("XT");
                 app.device = {
                     deviceId: targetMac,
                     deviceName: targetMac,
@@ -7562,7 +7564,7 @@ define("pages/index/index.js", function(require, module, exports, window, docume
                     machineid: targetMac,
                     factoryName: "XT"
                 };
-                app.userId = app.userId || "0000000000000000";
+                app.userId = app.userId || "240901C29712078";
                 app.cardId = app.cardId || "00000000";
 
                 // 执行开关水
