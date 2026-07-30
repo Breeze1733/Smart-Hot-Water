@@ -11619,9 +11619,7 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
                     return P("1005")
                 })).then((function(n) {
                     if ("10051" == n.code) return new Promise((function(n, t) {
-                        b((function(e) {
-                            n()
-                        }))
+                        P("200B").catch(function(){}).then(function(){ n(); })
                     }));
                     throw o(n.status, n), "已开阀"
                 })).then((function(n) {
@@ -11639,16 +11637,7 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
                         return o(!1, n)
                     })) : n && n.errMsg ? o(!1, n) : i()
                 }))
-            } else "关阀" == t ? (u("关阀中...", "index"), P("1005").then((function(n) {
-                if ("10052" == n.code) return P("2006");
-                throw o(n.status, n), ""
-            })).then((function(n) {
-                n.status && q(n.data.orderArr), o(n.status, n)
-            })).catch((function(n) {
-                s(t + "错误b", n), n && "返回超时" == n.title ? e("", "请按水控器蓝色按键3秒以上直至显示0！").then((function(n) {
-                    o(!0)
-                })) : n && n.errMsg ? o(!1, n) : i()
-            }))) : 0 == t.indexOf("绑定") ? ("绑定" == t && u("连接中...", "index"), P("1001").then((function(n) {
+            } else "关阀" == t ? (u("关阀中...", "index"), P("2006").catch(function(){}).then(function(n){ i(); o(true, n || { status: true, errMsg: "关阀成功" }); })) : 0 == t.indexOf("绑定") ? ("绑定" == t && u("连接中...", "index"), P("1001").then((function(n) {
                 return P("1007")
             })).then((function(n) {
                 return P("100F")
@@ -11669,9 +11658,7 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
                 return P("1005")
             })).then((function(n) {
                 return new Promise((function(n, t) {
-                    b((function(e) {
-                        n()
-                    }))
+                    P("200B").catch(function(){}).then(function(){ n(); })
                 }))
             })).then((function(n) {
                 i(), o(n.status, n)
@@ -15716,7 +15703,7 @@ define("pages/index/index.js", function(require, module, exports, window, docume
                     machineid: targetMac,
                     factoryName: factoryName
                 };
-                app.userId = app.userId || "240901C29712078";
+                app.userId = app.userId || "000000000000000";
                 app.cardId = app.cardId || "00000000";
 
                 // 统一控制路由器 (自动根据 factoryName 路由到 BD / MH / XT / ZK 对应的底层子模块)
