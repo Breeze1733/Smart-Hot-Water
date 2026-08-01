@@ -136,12 +136,25 @@ public class NativeBleBridge {
                     String name = device.getName() != null ? device.getName() : "";
                     ScanRecord record = result.getScanRecord();
                     String localName = (record != null && record.getDeviceName() != null) ? record.getDeviceName() : "";
+                    byte[] rawBytes = record != null ? record.getBytes() : null;
 
-                    boolean matched = address.equalsIgnoreCase(targetMac)
-                                   || name.equalsIgnoreCase(targetMac)
-                                   || name.contains(targetMac)
-                                   || localName.equalsIgnoreCase(targetMac)
-                                   || localName.contains(targetMac);
+                    // 100% 对齐微信小程序规范化过滤逻辑
+                    String cleanTarget = targetMac.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+                    String cleanAddr = address.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+
+                    String cleanName = name.replace("MX_BLE_HOTWM:", "BD").replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+                    String cleanLocalName = localName.replace("MX_BLE_HOTWM:", "BD").replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+                    String rawHex = rawBytes != null ? bytesToHex(rawBytes).toUpperCase() : "";
+
+                    // 5重精准比对：Address / Name / LocalName / AdvertisData Raw Hex
+                    boolean matched = (!cleanTarget.isEmpty() && (
+                                          cleanAddr.equals(cleanTarget)
+                                       || cleanName.equals(cleanTarget)
+                                       || cleanName.contains(cleanTarget)
+                                       || cleanLocalName.equals(cleanTarget)
+                                       || cleanLocalName.contains(cleanTarget)
+                                       || rawHex.contains(cleanTarget)
+                                       ));
 
                     if (matched) {
                         scanner.stopScan(this);

@@ -380,7 +380,7 @@
             var text = container.innerText;
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(function() {
-                    alert("日志已复制到剪贴板");
+                    window.logToConsole("[系统] 日志已成功复制到剪贴板", "success");
                 }).catch(function() {
                     prompt("请手动复制日志：", text);
                 });
@@ -433,20 +433,17 @@
             var mac = document.getElementById("macInput").value.trim();
             if (!mac) {
                 window.logToConsole("[Mac Error] 请输入有效的 MAC 地址", "error");
-                alert("请输入 MAC 地址");
                 return;
             }
             try { AppNativeBle.saveMac(mac); } catch (e) {}
             try { localStorage.setItem("myMac", mac); } catch (e) {}
             window.logToConsole("[Mac Saved] MAC 地址已保存: " + mac, "success");
-            alert("已保存");
         }
 
         function openWater() {
             var mac = document.getElementById("macInput").value.trim();
             if (!mac) {
                 window.logToConsole("[链路中断] MAC地址为空，无法开水！", "error");
-                alert("请输入 MAC 地址");
                 return;
             }
             window.logToConsole("==========================================", "info");
@@ -462,7 +459,6 @@
             var mac = document.getElementById("macInput").value.trim();
             if (!mac) {
                 window.logToConsole("[链路中断] MAC地址为空，无法关水！", "error");
-                alert("请输入 MAC 地址");
                 return;
             }
             window.logToConsole("==========================================", "info");

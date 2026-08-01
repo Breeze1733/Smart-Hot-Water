@@ -1,4 +1,4 @@
-﻿var __wxAppData = __wxAppData || {};
+var __wxAppData = __wxAppData || {};
 var __wxRoute = __wxRoute || "";
 var __wxRouteBegin = __wxRouteBegin || "";
 var __wxAppCode__ = __wxAppCode__ || {};
@@ -9195,13 +9195,17 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
             c = arguments.length > 2 && void 0 !== arguments[2] && arguments[2];
         k("getd").then((function(i) {
             i.data && i.data.no ? c ? k("clrd").then((function(e) {
+                if(window.logToConsole) window.logToConsole("[抹除记录] 批量擦除水表数据成功", "success");
                 w(t, ++n, c)
             })).catch((function(n) {
+                if(window.logToConsole) window.logToConsole("[抹除记录] 批量擦除水表数据失败: " + JSON.stringify(n), "warn");
                 t(!1, n)
             })) : e.consumeData(i.data, (function(e) {
                 e ? k("clrd").then((function(e) {
+                    if(window.logToConsole) window.logToConsole("[抹除记录] 批量擦除水表数据成功", "success");
                     w(t, ++n, c)
                 })).catch((function(n) {
+                    if(window.logToConsole) window.logToConsole("[抹除记录] 批量擦除水表数据失败: " + JSON.stringify(n), "warn");
                     t(!1, n)
                 })) : t(!1, e)
             })) : t(!0, i)
@@ -9219,25 +9223,19 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
                     C({
                         action: n
                     }).then((function(t) {
-                        return a("运行状态 gets"), k("gets", {
+                        // 开阀前直接擦除记录，不进行 gets 状态拦截抛错
+                        return k("clrd").then(function(){ if(window.logToConsole) window.logToConsole("[抹除记录] 开阀前擦除记录成功", "success"); }).catch(function(e){ if(window.logToConsole) window.logToConsole("[抹除记录] 开阀前擦除记录失败/超时: " + JSON.stringify(e), "warn"); });
+                    })).then((function(t) {
+                        return a("设置时间 setdt"), k("setdt", {
                             action: n
                         })
                     })).then((function(t) {
-                        if (1 == t.rs) {
-                            if (q.userId.substr(7) == t.id) return t;
-                            throw {
-                                errMsg: "水表正在使用，请长按水表上的按钮三秒关阀，然后重新操作"
-                            }
-                        }
-                        return a("设置时间 setdt"), k("setdt", {
+                        return a("开启水阀 open"), k("open", {
                             action: n
-                        }).then((function(t) {
-                            return a("开启水阀 open"), k("open", {
-                                action: n
-                            })
-                        }))
+                        })
                     })).then((function(t) {
-                        m(!0, t), k("clrd").catch(function(){})
+                        if (!t || !t.status) throw t || { status: false, errMsg: "开阀确认失败" };
+                        m(!0, t);
                     })).catch((function(n) {
                         a("开阀失败", n), n && n.errMsg ? m(!1, n) : o()
                     }));
@@ -9250,9 +9248,9 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
                     }).then((function(t) {
                         return k("close")
                     })).then((function(t) {
-                        m(!0, t), k("clrd").catch(function(){})
-
-
+                        if (!t || !t.status) throw t || { status: false, errMsg: "关阀失败，水阀未响应" };
+                        m(!0, t);
+                        return k("clrd").then(function(){ if(window.logToConsole) window.logToConsole("[抹除记录] 关阀后擦除记录成功", "success"); }).catch(function(e){ if(window.logToConsole) window.logToConsole("[抹除记录] 关阀后擦除记录失败: " + JSON.stringify(e), "warn"); });
                     })).catch((function(t) {
                         a("关阀失败", t), !t || "错误2" != t.title && "错误9" != t.title ? m(!1, t) : r("", "请按水控上方按键3秒以上进行结算").then((function(t) {
                             m(!0)
@@ -9746,9 +9744,7 @@ define("C372FB5794FC73BFA51493505AB6E8C0.js", function(require, module, exports,
     function q(r, i, a) {
         return function(n, o) {
             var u, s, c = i(n, o);
-            if (!n && !c && o) return "object" == e(o) ? (u = o.title || r + "失败", s = o.msg || o.errMsg || o.errormsg || "") : (u = r + "失败", s = o || ""), t(u, s, "取消", "重试", (function() {
-                return h(r, i, !0, a)
-            })), "请放置卡片" != u && g(u, s), !0
+            if (!n && !c && o) return "object" == e(o) ? (u = o.title || r + "失败", s = o.msg || o.errMsg || o.errormsg || "") : (u = r + "失败", s = o || ""), "请放置卡片" != u && g(u, s), !0
         }
     }
     module.exports = {
@@ -9842,13 +9838,17 @@ define("C4C0007394FC73BFA2A668741317E8C0.js", function(require, module, exports,
             c = arguments.length > 2 && void 0 !== arguments[2] && arguments[2];
         k("getd").then((function(i) {
             i.data ? c ? k("clrd").then((function(e) {
+                if(window.logToConsole) window.logToConsole("[抹除记录] 批量擦除水表数据成功", "success");
                 B(n, ++t, c)
             })).catch((function(t) {
+                if(window.logToConsole) window.logToConsole("[抹除记录] 批量擦除水表数据失败: " + JSON.stringify(t), "warn");
                 n(!1, t)
             })) : e.consumeData(i.data, (function(e) {
                 e ? k("clrd").then((function(e) {
+                    if(window.logToConsole) window.logToConsole("[抹除记录] 批量擦除水表数据成功", "success");
                     B(n, ++t, c)
                 })).catch((function(t) {
+                    if(window.logToConsole) window.logToConsole("[抹除记录] 批量擦除水表数据失败: " + JSON.stringify(t), "warn");
                     n(!1, t)
                 })) : n(!1, e)
             })) : n(!0, i)
@@ -9877,31 +9877,21 @@ define("C4C0007394FC73BFA2A668741317E8C0.js", function(require, module, exports,
                     C({
                         action: t
                     }).then((function(n) {
-                        return a("运行状态 gets"), k("gets", {
+                        // 开阀前直接擦除记录，不进行 gets 状态拦截抛错
+                        return k("clrd").then(function(){ if(window.logToConsole) window.logToConsole("[抹除记录] 开阀前擦除记录成功", "success"); }).catch(function(e){ if(window.logToConsole) window.logToConsole("[抹除记录] 开阀前擦除记录失败/超时: " + JSON.stringify(e), "warn"); });
+                    })).then((function(n) {
+                        return a("设置时间 setdt"), k("setdt", {
                             action: t
                         })
                     })).then((function(n) {
-                        if (1 == n.rs) {
-                            if (M.userId.substr(7) == n.id) return n;
-                            throw {
-                                errMsg: "水表正在使用，请长按水表上的按钮三秒关阀，然后重新操作"
-                            }
-                        }
-                        return a("设置时间 setdt"), k("setdt", {
+                        return a("开启水阀 open"), k("open", {
                             action: t
-                        }).then((function(n) {
-                            return a("开启水阀 open"), k("open", {
-                                action: t
-                            })
-                        }))
+                        })
                     })).then((function(n) {
-                        q(!0, n), k("clrd").catch(function(){})
-
-
+                        if (!n || !n.status) throw n || { status: false, errMsg: "开阀确认失败" };
+                        q(!0, n);
                     })).catch((function(t) {
                         a("开阀失败", t), t && t.errMsg ? q(!1, t) : o()
-
-
                     }));
                     break;
                 case "关阀":
@@ -9910,9 +9900,9 @@ define("C4C0007394FC73BFA2A668741317E8C0.js", function(require, module, exports,
                     }).then((function(n) {
                         return k("close")
                     })).then((function(n) {
-                        q(!0, n), k("clrd").catch(function(){})
-
-
+                        if (!n || !n.status) throw n || { status: false, errMsg: "关阀失败，水阀未响应" };
+                        q(!0, n);
+                        return k("clrd").then(function(){ if(window.logToConsole) window.logToConsole("[抹除记录] 关阀后擦除记录成功", "success"); }).catch(function(e){ if(window.logToConsole) window.logToConsole("[抹除记录] 关阀后擦除记录失败: " + JSON.stringify(e), "warn"); });
                     })).catch((function(n) {
                         a("关阀失败", n), !n || "错误02" != n.title && "错误09" != n.title ? q(!1, n) : r("", "请按水控上方按键3秒以上进行结算").then((function(n) {
                             q(!0)
@@ -10472,10 +10462,10 @@ define("E138E92794FC73BF875E8120E2C7E8C0.js", function(require, module, exports,
         return l
     }, t.helper.isUndefined(console) && (console = {
         warn: function(e) {
-            alert(e)
+            if (typeof window !== 'undefined' && window.logToConsole) window.logToConsole(String(e), 'warn');
         },
         log: function(e) {
-            alert(e)
+            if (typeof window !== 'undefined' && window.logToConsole) window.logToConsole(String(e), 'info');
         },
         error: function(e) {
             throw e
@@ -11641,24 +11631,45 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
                 P("1001", 0, t).then((function(n) {
                     return P("1004", 0, t)
                 })).then((function(n) {
-                    return P("1005")
-                })).then((function(n) {
-                    if ("10051" == n.code) return new Promise((function(n, t) {
-                        P("200B").catch(function(){}).then(function(){ n(); })
-                    }));
-                    throw o(n.status, n), "已开阀"
-                })).then((function(n) {
-                    return Promise.resolve();
+                    // 直接尝试擦除记录，不检查 1005 状态；抹除失败输出警告日志但不打断开阀
+                    return P("200B").then(function(){
+                        if(window.logToConsole) window.logToConsole("[抹除记录] 开阀前擦除水表历史记录成功", "success");
+                    }).catch(function(e){
+                        if(window.logToConsole) window.logToConsole("[抹除记录] 开阀前擦除水表历史记录失败/超时: " + (e && e.errMsg ? e.errMsg : JSON.stringify(e)), "warn");
+                    });
                 })).then((function(n) {
                     return P("2004")
                 })).then((function(n) {
                     return P("2005")
                 })).then((function(n) {
-                    n.status && i(), o(n.status, n)
+                    if (n && n.status) {
+                        i();
+                        o(true, n);
+                    } else {
+                        i();
+                        o(false, n || { status: false, errMsg: "开阀确认失败" });
+                    }
                 })).catch((function(n) {
-                    s(t + "错误a", n), i(), o(!1, n && n.errMsg ? n : { status: false, errMsg: "蓝牙操作失败，服务器不可用" })
+                    s(t + "错误a", n), i(), o(!1, n && n.errMsg ? n : { status: false, errMsg: "蓝牙开阀失败" })
                 }))
-            } else "关阀" == t ? (u("关阀中...", "index"), P("2006").catch(function(){}).then(function(n){ P("200B").catch(function(){}).then(function(){ i(); o(true, n || { status: true, errMsg: "关阀成功" }) }) })) : 0 == t.indexOf("绑定") ? ("绑定" == t && u("连接中...", "index"), P("1001").then((function(n) {
+            } else "关阀" == t ? (u("关阀中...", "index"), P("2006").then(function(n){
+                if (!n || !n.status) {
+                    throw n || { status: false, errMsg: "关阀指令发送失败" };
+                }
+                // 关阀成功后尝试擦除记录
+                return P("200B").then(function(){
+                    if(window.logToConsole) window.logToConsole("[抹除记录] 关阀后擦除水表历史记录成功", "success");
+                }).catch(function(e){
+                    if(window.logToConsole) window.logToConsole("[抹除记录] 关阀后擦除水表历史记录失败: " + (e && e.errMsg ? e.errMsg : JSON.stringify(e)), "warn");
+                }).then(function(){
+                    i();
+                    o(true, n || { status: true, errMsg: "关阀成功" });
+                });
+            }).catch(function(n){
+                s(t + "关阀错误", n);
+                i();
+                o(!1, n && n.errMsg ? n : { status: false, errMsg: "关阀失败，水阀未响应" });
+            })) : 0 == t.indexOf("绑定") ? ("绑定" == t && u("连接中...", "index"), P("1001").then((function(n) {
                 return P("1007")
             })).then((function(n) {
                 return P("100F")
@@ -11679,7 +11690,7 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
                 return P("1005")
             })).then((function(n) {
                 return new Promise((function(n, t) {
-                    P("200B").catch(function(){}).then(function(){ n(); })
+                    P("200B").then(function(){ if(window.logToConsole) window.logToConsole("[抹除记录] 擦除历史记录成功", "success"); }).catch(function(e){ if(window.logToConsole) window.logToConsole("[抹除记录] 擦除历史记录失败: " + JSON.stringify(e), "warn"); }).then(function(){ n(); })
                 }))
             })).then((function(n) {
                 i(), o(n.status, n)
@@ -15732,9 +15743,15 @@ define("pages/index/index.js", function(require, module, exports, window, docume
                 var actionName = isOpen ? "开阀" : "关阀";
                 var callback = function(success, resultData) {
                     if (success) {
-                        alert(actionName + " 成功 [" + factoryName + "]");
+                        if (window.logToConsole) {
+                            window.logToConsole("==========================================", "success");
+                            window.logToConsole("【" + actionName + "成功】厂商: " + factoryName, "success");
+                        }
                     } else {
-                        alert(actionName + " 失败: " + JSON.stringify(resultData));
+                        if (window.logToConsole) {
+                            window.logToConsole("==========================================", "error");
+                            window.logToConsole("【" + actionName + "失败】厂商: " + factoryName + " 原因: " + JSON.stringify(resultData), "error");
+                        }
                     }
                 };
                 switcher.switching(actionName, callback, "ble", false);
