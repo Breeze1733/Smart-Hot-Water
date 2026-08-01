@@ -27,6 +27,11 @@ public class NativeBleBridge {
     private BluetoothGatt bluetoothGatt;
     private BluetoothGattCharacteristic writeCharacteristic;
 
+    // 从水表实际发现的 UUID（动态获取，非硬编码）
+    private String discoveredServiceUuid = "";
+    private String discoveredWriteUuid = "";
+    private String discoveredNotifyUuid = "";
+
     private static final UUID SERVICE_UUID = UUID.fromString("0000fee7-0000-1000-8000-00805f9b34fb");
     private static final UUID NOTIFY_UUID  = UUID.fromString("000036f5-0000-1000-8000-00805f9b34fb");
     private static final UUID WRITE_UUID   = UUID.fromString("000036f6-0000-1000-8000-00805f9b34fb");
@@ -82,6 +87,24 @@ public class NativeBleBridge {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    /** 返回水表实际发现的 Service UUID（动态从设备读取，非硬编码） */
+    @JavascriptInterface
+    public String getDiscoveredServiceUuid() {
+        return discoveredServiceUuid.isEmpty() ? "0000fee7-0000-1000-8000-00805f9b34fb" : discoveredServiceUuid;
+    }
+
+    /** 返回水表实际发现的 Write Characteristic UUID */
+    @JavascriptInterface
+    public String getDiscoveredWriteUuid() {
+        return discoveredWriteUuid.isEmpty() ? "000036f6-0000-1000-8000-00805f9b34fb" : discoveredWriteUuid;
+    }
+
+    /** 返回水表实际发现的 Notify Characteristic UUID */
+    @JavascriptInterface
+    public String getDiscoveredNotifyUuid() {
+        return discoveredNotifyUuid.isEmpty() ? "000036f5-0000-1000-8000-00805f9b34fb" : discoveredNotifyUuid;
     }
 
     @JavascriptInterface
@@ -267,7 +290,9 @@ public class NativeBleBridge {
                         sbServices.append(sUuid).append(" | ");
                     }
 
-                    if (sUuid.contains("fee7") || sUuid.contains("ffe0") || sUuid.contains("fee0") || targetService == null) {
+                    if (sUuid.contains("fee7") || sUuid.contains("ffe0") || sUuid.contains("fee0")
+                        || sUuid.contains("ff12") || sUuid.contains("fe60") || sUuid.contains("2600")
+                        || sUuid.contains("8900") || targetService == null) {
                         BluetoothGattCharacteristic writeC = null;
                         BluetoothGattCharacteristic notifyC = null;
 
@@ -299,6 +324,11 @@ public class NativeBleBridge {
                     String serviceUuidShort = targetService.getUuid().toString();
                     String writeUuidShort = targetWriteChar.getUuid().toString();
                     String notifyUuidShort = targetNotifyChar.getUuid().toString();
+
+                    // 保存实际从水表发现的 UUID，供 JS 层动态获取
+                    discoveredServiceUuid = serviceUuidShort;
+                    discoveredWriteUuid = writeUuidShort;
+                    discoveredNotifyUuid = notifyUuidShort;
 
                     logToJs("[Android BLE] 匹配到有效服务: " + serviceUuidShort + " (Write: " + writeUuidShort + ", Notify: " + notifyUuidShort + ")", "success");
 

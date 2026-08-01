@@ -337,6 +337,15 @@
                         window.logToConsole("[BLE Native Disconnect Error] " + e.message, "error");
                     }
                 },
+                getDiscoveredServiceUuid: function() {
+                    try { var raw = getRaw(); return raw.getDiscoveredServiceUuid ? raw.getDiscoveredServiceUuid() : ""; } catch(e) { return ""; }
+                },
+                getDiscoveredWriteUuid: function() {
+                    try { var raw = getRaw(); return raw.getDiscoveredWriteUuid ? raw.getDiscoveredWriteUuid() : ""; } catch(e) { return ""; }
+                },
+                getDiscoveredNotifyUuid: function() {
+                    try { var raw = getRaw(); return raw.getDiscoveredNotifyUuid ? raw.getDiscoveredNotifyUuid() : ""; } catch(e) { return ""; }
+                },
                 onDataReceived: function(cb) {
                     _bleDataCb = cb;
                     window.logToConsole("[BLE Native] 已注册蓝牙 Notify 数据监听回调", "info");
@@ -346,12 +355,7 @@
                         window.logToConsole("[BLE Native Notify] 收到水表回复 Notify Hex: " + hexStr, "success");
                         var cb = window._bleDataCb || _bleDataCb;
                         if (cb) {
-                            var bytes = [];
-                            for (var i = 0; i < hexStr.length; i += 2) {
-                                bytes.push(parseInt(hexStr.substr(i, 2), 16));
-                            }
-                            var buffer = new Uint8Array(bytes).buffer;
-                            cb(buffer);
+                            cb(hexStr);
                         } else {
                             window.logToConsole("[BLE Native Notify Warning] 收到 Notify 数据但 JS 未设置 _bleDataCb!", "warn");
                         }

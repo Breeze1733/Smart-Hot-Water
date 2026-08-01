@@ -1,4 +1,4 @@
-var __wxAppData = __wxAppData || {};
+﻿var __wxAppData = __wxAppData || {};
 var __wxRoute = __wxRoute || "";
 var __wxRouteBegin = __wxRouteBegin || "";
 var __wxAppCode__ = __wxAppCode__ || {};
@@ -5757,6 +5757,7 @@ define("24B5604294FC73BF42D308457C37E8C0.js", function(require, module, exports,
     var r = require("@babel/runtime/helpers/createForOfIteratorHelper.js"),
         e = require("F66EF4C094FC73BF90089CC7F697E8C0.js").formatTime,
         s = require("564C179694FC73BF302A7F9142E6E8C0.js").CRC,
+        des3 = require("634DE34294FC73BF302B8B45C2F6E8C0.js"),
         t = require("CE76404694FC73BFA81028419976E8C0.js"),
         a = t.log,
         u = (t.error, require("961D3B4394FC73BFF07B53440C77E8C0.js").API_XT, require("25B9627594FC73BF43DF0A720987E8C0.js")),
@@ -5827,6 +5828,17 @@ define("24B5604294FC73BF42D308457C37E8C0.js", function(require, module, exports,
         for (var e = parseInt(r, 16).toString(2); e.length < 8;) e = "0" + e;
         return e
     }
+    function xtLocalDecode(hexStr) {
+        for (var result = "", i = 0; i < hexStr.length; i += 2) {
+            var byteVal = parseInt(hexStr.substr(i, 2), 16);
+            if (byteVal < 51) byteVal += 256;
+            var decoded = (byteVal - 51).toString(16);
+            if (decoded.length === 1) decoded = "0" + decoded;
+            result += decoded;
+        }
+        return result.toUpperCase();
+    }
+    var XT_FIXED_3DES_KEY = "202122232425262728292A2B2C2D2E2F";
     module.exports = {
         myDataSet: g,
         getData: function(r) {
@@ -5931,13 +5943,24 @@ define("24B5604294FC73BF42D308457C37E8C0.js", function(require, module, exports,
                             }
                         break;
                     case "1004":
-                        return A = 1, a.key = k, void b(d, e).then((function(r) {
-                            a.key = k = r, s({
-                                status: u,
-                                errMsg: p,
-                                data: a,
-                                code: v
-                            })
+                        return A = 1, a.key = k, new Promise((function(resolve) {
+                            try {
+                                var dataLen = parseInt(e.substr(24, 2) + e.substr(22, 2), 16);
+                                var payload = e.substring(26, 26 + dataLen * 2);
+                                var decoded = xtLocalDecode(payload);
+                                var decrypted = des3.PBOC_3DES_discryption(decoded, XT_FIXED_3DES_KEY);
+                                if (decrypted && decrypted.length >= 12) {
+                                    k.key1APP = decrypted.substr(0, 12);
+                                    k.key2APP = decrypted.length >= 24 ? decrypted.substr(12, 12) : "000000000000";
+                                    k.key3APP = decrypted.length >= 36 ? decrypted.substr(24, 12) : "000000000000";
+                                    k.encryptionNonce = decrypted.length >= 48 ? decrypted.substr(36, 12) : "000000000000";
+                                    k.encryptionFactor = decrypted.length >= 60 ? decrypted.substr(48, 12) : "000000000000";
+                                    k.key3Meter = "000000000000";
+                                }
+                            } catch(e2) {}
+                            a.key = k;
+                            s({ status: true, errMsg: "OK", data: a, code: v });
+                            resolve();
                         }));
                     case "2005":
                         a.UserId = l(e.substr(26, 8)), a.status = e.substr(34, 2), "00" == a.status ? p = "开阀成功" : (u = !1, p = m(a.status, 1));
@@ -8029,7 +8052,7 @@ define("92ACE77294FC73BFF4CA8F75C8D6E8C0.js", function(require, module, exports,
         if (L || (L = getApp()), q.setStorageSync("nbOpen", 0), l(e + "中...", "index"), "nb" != t) switch (e) {
             case "开阀":
                 var u = !1;
-                g(R().deviceMac).then((function(n) {
+                Promise.resolve().then((function(n) {
                     return N(e)
                 })).then((function(c) {
                     return function e(n, t, c) {
@@ -8057,7 +8080,7 @@ define("92ACE77294FC73BFF4CA8F75C8D6E8C0.js", function(require, module, exports,
                 })).then((function(e) {
                     return i("采集成功", e)
                 })).catch((function(t) {
-                    u ? i("采集失败", t) : (i("开阀失败", t), t && !t.code && c ? M(e, n) : n(!1, t))
+                    u ? i("采集失败", t) : (i("开阀失败", t), n(!1, t))
                 }));
                 break;
             case "关阀":
@@ -8073,7 +8096,7 @@ define("92ACE77294FC73BFF4CA8F75C8D6E8C0.js", function(require, module, exports,
                 })).then((function(e) {
                     return i("采集成功", e)
                 })).catch((function(t) {
-                    a ? i("采集失败", t) : (i("关阀失败", t), t && !t.code && c ? M(e, n) : n(!1, t))
+                    a ? i("采集失败", t) : (i("关阀失败", t), n(!1, t))
                 }));
                 break;
             case "绑卡":
@@ -8180,9 +8203,7 @@ define("92ACE77294FC73BFF4CA8F75C8D6E8C0.js", function(require, module, exports,
             billId: c,
             type: t
         }).then((function(r) {
-            return T(e, r).then((function(n) {
-                return k(e, r)
-            })).then((function(r) {
+            return k(e, r).then((function(r) {
                 return S(e, n, t)
             }))
         })).catch((function(r) {
@@ -9192,11 +9213,9 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
         switching: function(n, c, u, f) {
             switch (q || (q = getApp()), t = q.factory || p, i(n + "中...", "index"), m = c, n) {
                 case "开阀":
-                    if ("nb" == u) return void l(t).then((function(t) {
-                        b.setStorageSync("nbOpen", 1), m(!0)
-                    })).catch((function(t) {
-                        return m(!1, t)
-                    }));
+                    if ("nb" == u) return m(!1, { errMsg: "服务器不可用" });
+
+
                     C({
                         action: n
                     }).then((function(t) {
@@ -9218,18 +9237,12 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
                             })
                         }))
                     })).then((function(t) {
-                        m(!0, t), t.data && t.data.no && e.consumeData(t.data, (function(t) {
-                            t && k("clrd").then((function(t) {
-                                w((function(t, n) {}))
-                            }))
-                        }))
+                        m(!0, t), k("clrd").catch(function(){})
                     })).catch((function(n) {
-                        a("开阀失败", n), n.toNB ? l(t, n).then((function(t) {
-                            b.setStorageSync("nbOpen", 1), m(!0)
-                        })).catch((function(t) {
-                            return m(!1, t)
-                        })) : n && n.errMsg ? m(!1, n) : o()
+                        a("开阀失败", n), n && n.errMsg ? m(!1, n) : o()
                     }));
+
+
                     break;
                 case "关阀":
                     C({
@@ -9237,9 +9250,9 @@ define("BFB0FA4194FC73BFD9D6924695E7E8C0.js", function(require, module, exports,
                     }).then((function(t) {
                         return k("close")
                     })).then((function(t) {
-                        m(!0, t), t.data && t.data.no && e.consumeData(t.data, (function(t) {
-                            t && k("clrd")
-                        }))
+                        m(!0, t), k("clrd").catch(function(){})
+
+
                     })).catch((function(t) {
                         a("关阀失败", t), !t || "错误2" != t.title && "错误9" != t.title ? m(!1, t) : r("", "请按水控上方按键3秒以上进行结算").then((function(t) {
                             m(!0)
@@ -9418,7 +9431,11 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
                         reject(res);
                     };
                 }
-                if (NativeBle.connect) try { NativeBle.connect({ mac: e.deviceId }); } catch(err) {}
+                if (NativeBle.connect) try { NativeBle.connect({ mac: e.deviceId }); } catch(err) {
+                    if (failCb) failCb({ errMsg: "createBLEConnection:fail " + (err.message || err) });
+                    if (completeCb) completeCb({ errMsg: "createBLEConnection:fail" });
+                    reject(err);
+                }
             });
         },
         closeBLEConnection: function(e) {
@@ -9460,7 +9477,12 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
         getBLEDeviceServices: function(e) {
             e = e || {};
             if (WX.getBLEDeviceServices) return WX.getBLEDeviceServices(e);
-            var res = { services: [{ uuid: "0000FEE7-0000-1000-8000-00805F9B34FB" }] };
+            // 从原生层动态获取水表实际发现的 Service UUID（非硬编码）
+            var svcUuid = "0000FEE7-0000-1000-8000-00805F9B34FB";
+            if (NativeBle.getDiscoveredServiceUuid) {
+                try { var real = NativeBle.getDiscoveredServiceUuid(); if (real) svcUuid = real; } catch(err) {}
+            }
+            var res = { services: [{ uuid: svcUuid }] };
             e.success && e.success(res);
             e.complete && e.complete(res);
             return Promise.resolve(res);
@@ -9468,10 +9490,19 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
         getBLEDeviceCharacteristics: function(e) {
             e = e || {};
             if (WX.getBLEDeviceCharacteristics) return WX.getBLEDeviceCharacteristics(e);
+            // 从原生层动态获取水表实际发现的 Characteristic UUID（非硬编码）
+            var writeUuid = "000036F6-0000-1000-8000-00805F9B34FB";
+            var notifyUuid = "000036F5-0000-1000-8000-00805F9B34FB";
+            if (NativeBle.getDiscoveredWriteUuid) {
+                try { var w = NativeBle.getDiscoveredWriteUuid(); if (w) writeUuid = w; } catch(err) {}
+            }
+            if (NativeBle.getDiscoveredNotifyUuid) {
+                try { var n = NativeBle.getDiscoveredNotifyUuid(); if (n) notifyUuid = n; } catch(err) {}
+            }
             var res = {
                 characteristics: [
-                    { uuid: "000036F5-0000-1000-8000-00805F9B34FB", properties: { notify: true } },
-                    { uuid: "000036F6-0000-1000-8000-00805F9B34FB", properties: { write: true } }
+                    { uuid: notifyUuid, properties: { notify: true } },
+                    { uuid: writeUuid, properties: { write: true } }
                 ]
             };
             e.success && e.success(res);
@@ -9638,10 +9669,12 @@ define("C2427CC194FC73BFA42414C6A277E8C0.js", function(require, module, exports,
         },
         request: function(e) {
             e = e || {};
-            var res = { statusCode: 200, data: { status: true, Result: 1, errMsg: "OK", code: "0" } };
-            e.success && e.success(res);
-            e.complete && e.complete(res);
-            return Promise.resolve(res);
+            if (WX.request) return WX.request(e);
+            var url = e.url || "";
+            // 服务器不可用，所有API请求返回失败
+            var res = { statusCode: 503, data: { status: false, Result: 0 } };
+            if (e.fail) e.fail({ errMsg: "request:fail 服务器不可用，仅支持本地蓝牙操作" });
+            if (e.complete) e.complete(res);
         },
         getUpdateManager: function() {
             return {};
@@ -9838,16 +9871,12 @@ define("C4C0007394FC73BFA2A668741317E8C0.js", function(require, module, exports,
         switching: function(t, c, u, f) {
             switch (M || (M = getApp()), n = M.factory || b, i(t + "中...", "index"), q = c, t) {
                 case "开阀":
-                    if ("nb" == u) return void g(n).then((function(n) {
-                        m.setStorageSync("nbOpen", 1), q(!0)
-                    })).catch((function(n) {
-                        return q(!1, n)
-                    }));
-                    l(M.device.deviceName).then((function(n) {
-                        return C({
-                            action: t
-                        })
-                    })).then((function(n) {
+                    if ("nb" == u) return q(!1, { errMsg: "服务器不可用" });
+
+
+                    C({
+                        action: t
+                    }).then((function(n) {
                         return a("运行状态 gets"), k("gets", {
                             action: t
                         })
@@ -9866,17 +9895,13 @@ define("C4C0007394FC73BFA2A668741317E8C0.js", function(require, module, exports,
                             })
                         }))
                     })).then((function(n) {
-                        q(!0, n), n.data && e.consumeData(n.data, (function(n) {
-                            n && k("clrd").then((function(n) {
-                                B((function(n, t) {}))
-                            }))
-                        }))
+                        q(!0, n), k("clrd").catch(function(){})
+
+
                     })).catch((function(t) {
-                        a("开阀失败", t), t.toNB ? g(n, t).then((function(n) {
-                            m.setStorageSync("nbOpen", 1), q(!0)
-                        })).catch((function(n) {
-                            return q(!1, n)
-                        })) : t && t.errMsg ? q(!1, t) : o()
+                        a("开阀失败", t), t && t.errMsg ? q(!1, t) : o()
+
+
                     }));
                     break;
                 case "关阀":
@@ -9885,9 +9910,9 @@ define("C4C0007394FC73BFA2A668741317E8C0.js", function(require, module, exports,
                     }).then((function(n) {
                         return k("close")
                     })).then((function(n) {
-                        q(!0, n), n.data && e.consumeData(n.data, (function(n) {
-                            n && k("clrd")
-                        }))
+                        q(!0, n), k("clrd").catch(function(){})
+
+
                     })).catch((function(n) {
                         a("关阀失败", n), !n || "错误02" != n.title && "错误09" != n.title ? q(!1, n) : r("", "请按水控上方按键3秒以上进行结算").then((function(n) {
                             q(!0)
@@ -11631,13 +11656,9 @@ define("F143BE6694FC73BF9725D661EB27E8C0.js", function(require, module, exports,
                 })).then((function(n) {
                     n.status && i(), o(n.status, n)
                 })).catch((function(n) {
-                    s(t + "错误a", n), n.toNB ? v(w, n).then((function(n) {
-                        A.setStorageSync("nbOpen", 1), o(!0)
-                    })).catch((function(n) {
-                        return o(!1, n)
-                    })) : n && n.errMsg ? o(!1, n) : i()
+                    s(t + "错误a", n), i(), o(!1, n && n.errMsg ? n : { status: false, errMsg: "蓝牙操作失败，服务器不可用" })
                 }))
-            } else "关阀" == t ? (u("关阀中...", "index"), P("2006").catch(function(){}).then(function(n){ i(); o(true, n || { status: true, errMsg: "关阀成功" }); })) : 0 == t.indexOf("绑定") ? ("绑定" == t && u("连接中...", "index"), P("1001").then((function(n) {
+            } else "关阀" == t ? (u("关阀中...", "index"), P("2006").catch(function(){}).then(function(n){ P("200B").catch(function(){}).then(function(){ i(); o(true, n || { status: true, errMsg: "关阀成功" }) }) })) : 0 == t.indexOf("绑定") ? ("绑定" == t && u("连接中...", "index"), P("1001").then((function(n) {
                 return P("1007")
             })).then((function(n) {
                 return P("100F")
